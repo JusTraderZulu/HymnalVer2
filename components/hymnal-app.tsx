@@ -265,15 +265,15 @@ export default function HymnalApp() {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="sticky top-0 z-10 bg-background border-b p-4">
+    <div className="flex flex-col h-screen w-screen max-w-full overflow-hidden">
+      <header className="sticky top-0 z-10 bg-background border-b p-2 sm:p-4">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-bold text-center mb-4">Spiritual Baptist Hymnal</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-center mb-2 sm:mb-4">Spiritual Baptist Hymnal</h1>
 
           <PWAInstallPrompt />
 
           {isOffline && (
-            <Alert className="mb-4">
+            <Alert className="mb-2 sm:mb-4">
               <WifiOff className="h-4 w-4" />
               <AlertTitle>Offline Mode</AlertTitle>
               <AlertDescription>
@@ -283,7 +283,7 @@ export default function HymnalApp() {
           )}
 
           {showDirectoryInfo && (
-            <Alert className="mb-4">
+            <Alert className="mb-2 sm:mb-4">
               <Info className="h-4 w-4" />
               <AlertTitle>Using sample hymn data</AlertTitle>
               <AlertDescription>
@@ -293,11 +293,11 @@ export default function HymnalApp() {
             </Alert>
           )}
 
-          <div className="relative mb-4">
+          <div className="relative mb-2 sm:mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               type="search"
-              placeholder="Search by title, number, lyrics, author or category..."
+              placeholder="Search by title, number, lyrics, author..."
               value={searchQuery}
               onChange={handleSearch}
               className="pl-10"
@@ -305,29 +305,29 @@ export default function HymnalApp() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="flex w-full min-h-[40px]">
-              <TabsTrigger value="all" className="flex-1 flex items-center justify-center gap-1.5">
+            <TabsList className="flex w-full min-h-[40px] overflow-x-auto">
+              <TabsTrigger value="all" className="flex-1 flex items-center justify-center gap-1">
                 <Music className="h-4 w-4" />
-                <span>Hymns</span>
+                <span className="text-xs sm:text-sm">Hymns</span>
               </TabsTrigger>
-              <TabsTrigger value="choruses" className="flex-1 flex items-center justify-center gap-1.5">
+              <TabsTrigger value="choruses" className="flex-1 flex items-center justify-center gap-1">
                 <Mic className="h-4 w-4" />
-                <span>Choruses</span>
+                <span className="text-xs sm:text-sm">Choruses</span>
               </TabsTrigger>
-              <TabsTrigger value="favorites" className="flex-1 flex items-center justify-center gap-1.5">
+              <TabsTrigger value="favorites" className="flex-1 flex items-center justify-center gap-1">
                 <Heart className="h-4 w-4" />
-                <span>Favorites</span>
+                <span className="text-xs sm:text-sm">Favorites</span>
               </TabsTrigger>
-              <TabsTrigger value="recent" className="flex-1 flex items-center justify-center gap-1.5">
+              <TabsTrigger value="recent" className="flex-1 flex items-center justify-center gap-1">
                 <Clock className="h-4 w-4" />
-                <span>Recent</span>
+                <span className="text-xs sm:text-sm">Recent</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-auto">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-2">
@@ -337,7 +337,7 @@ export default function HymnalApp() {
           </div>
         ) : (
           <>
-            <div className="flex justify-end px-4 pt-4">
+            <div className="flex justify-end px-2 sm:px-4 pt-2 sm:pt-4">
               {activeTab === "all" ? (
                 <Button size="sm" onClick={handleAddNewHymn} className="flex items-center gap-1" disabled={isOffline}>
                   <Plus className="h-4 w-4" />

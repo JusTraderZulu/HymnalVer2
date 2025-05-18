@@ -26,55 +26,55 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
 
   return (
     <ScrollArea className="h-full">
-      <div className="max-w-3xl mx-auto p-4">
+      <div className="max-w-3xl mx-auto p-2 sm:p-4">
         {hymns.length === 0 ? (
-          <div className="text-center py-8">
-            <Music className="mx-auto h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-lg font-medium">No hymns found</p>
-            <p className="text-muted-foreground">Try adjusting your search query</p>
+          <div className="text-center py-6 sm:py-8">
+            <Music className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground" />
+            <p className="mt-3 sm:mt-4 text-base sm:text-lg font-medium">No hymns found</p>
+            <p className="text-sm text-muted-foreground">Try adjusting your search query</p>
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-2 sm:space-y-3">
             {hymns.map((hymn) => (
               <li key={getHymnKey(hymn)} className="border rounded-lg overflow-hidden">
                 <div className="flex items-center">
                   <Button
                     variant="ghost"
-                    className="flex-1 flex items-center justify-between p-4 h-auto"
+                    className="flex-1 flex items-center justify-between p-2 sm:p-4 h-auto"
                     onClick={() => onHymnSelect(hymn.hymnNumber)}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="bg-primary/10 text-primary font-medium rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="bg-primary/10 text-primary font-medium rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0 text-xs sm:text-sm">
                         {hymn.hymnNumber}
                       </span>
                       <div className="text-left">
-                        <div className="font-medium">{hymn.title}</div>
+                        <div className="font-medium text-sm sm:text-base truncate max-w-[150px] sm:max-w-xs">{hymn.title}</div>
                         {hymn.category && <div className="text-xs text-muted-foreground">{hymn.category}</div>}
                       </div>
                     </div>
                     {selectedHymn === hymn.hymnNumber ? (
-                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                      <ChevronUp className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                     ) : (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      <ChevronDown className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                     )}
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="mr-2"
+                    className="mr-1 sm:mr-2"
                     onClick={() => onToggleFavorite(hymn.hymnNumber)}
                     aria-label={favorites.includes(hymn.hymnNumber) ? "Remove from favorites" : "Add to favorites"}
                   >
                     <Heart
-                      className={`h-5 w-5 ${favorites.some(f => f === hymn.hymnNumber) ? "fill-primary text-primary" : "text-muted-foreground"}`}
+                      className={`h-4 w-4 sm:h-5 sm:w-5 ${favorites.some(f => f === hymn.hymnNumber) ? "fill-primary text-primary" : "text-muted-foreground"}`}
                     />
                   </Button>
                 </div>
                 {selectedHymn === hymn.hymnNumber && (
-                  <div className="p-4 pt-0 bg-muted/50">
-                    <div className="whitespace-pre-line">{hymn.lyrics}</div>
+                  <div className="p-3 sm:p-4 pt-0 bg-muted/50">
+                    <div className="whitespace-pre-line text-xs sm:text-sm">{hymn.lyrics}</div>
                     {hymn.author && (
-                      <div className="mt-4 text-sm text-muted-foreground">
+                      <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
                         <p>
                           Author: {hymn.author.name}{" "}
                           {hymn.author.birthYear &&

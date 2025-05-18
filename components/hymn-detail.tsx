@@ -125,24 +125,24 @@ export default function HymnDetail({
 
   return (
     <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="w-full sm:max-w-md p-0 flex flex-col h-full">
-        <SheetHeader className="flex flex-row items-center justify-between p-4 pb-2 border-b">
+      <SheetContent className="w-full sm:max-w-md p-0 flex flex-col h-full max-h-[100dvh] overflow-hidden">
+        <SheetHeader className="flex flex-row items-center justify-between p-2 sm:p-4 pb-2 border-b shrink-0">
           <SheetTitle className="text-left">
-            <span className="mr-2 inline-block bg-primary/10 text-primary font-medium rounded-full w-8 h-8 text-center leading-8">
+            <span className="mr-1 sm:mr-2 inline-block bg-primary/10 text-primary font-medium rounded-full w-7 h-7 sm:w-8 sm:h-8 text-center leading-7 sm:leading-8 text-sm sm:text-base">
               {hymn.hymnNumber}
             </span>
             {isEditing ? (
               <Input 
                 value={editedTitle}
                 onChange={(e) => setEditedTitle(e.target.value)}
-                className="inline-block ml-2 w-[calc(100%-3rem)]"
+                className="inline-block ml-1 sm:ml-2 w-[calc(100%-2.5rem)]"
                 placeholder="Hymn Title"
               />
             ) : (
-              hymn.title
+              <span className="text-base sm:text-lg">{hymn.title}</span>
             )}
           </SheetTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {!isEditing ? (
               <Button 
                 variant="ghost" 
@@ -151,11 +151,11 @@ export default function HymnDetail({
                 aria-label="Edit hymn"
                 disabled={isOffline}
               >
-                <Edit className="h-5 w-5" />
+                <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             ) : (
               <Button variant="ghost" size="icon" onClick={handleSave} disabled={isSaving} aria-label="Save changes">
-                <Save className="h-5 w-5" />
+                <Save className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             )}
             <Button
@@ -164,18 +164,18 @@ export default function HymnDetail({
               onClick={onToggleFavorite}
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
-              <Heart className={`h-5 w-5 ${isFavorite ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+              <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFavorite ? "fill-primary text-primary" : "text-muted-foreground"}`} />
             </Button>
             <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </div>
         </SheetHeader>
 
         <ScrollArea className="flex-1 overflow-auto">
-          <div className="p-4">
+          <div className="p-3 sm:p-4">
             {isEditing ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
                   <Label htmlFor="category">Category</Label>
                   <Input
@@ -229,23 +229,23 @@ export default function HymnDetail({
               </div>
             ) : (
               <>
-                <div className="whitespace-pre-line">{hymn.lyrics}</div>
+                <div className="whitespace-pre-line text-sm sm:text-base">{hymn.lyrics}</div>
 
                 {hymn.author && (
-                  <div className="mt-6 border-t pt-4">
-                    <h3 className="font-medium">About the Author</h3>
-                    <p className="text-sm mt-1">
+                  <div className="mt-4 sm:mt-6 border-t pt-3 sm:pt-4">
+                    <h3 className="font-medium text-sm sm:text-base">About the Author</h3>
+                    <p className="text-xs sm:text-sm mt-1">
                       {hymn.author.name}{" "}
                       {hymn.author.birthYear &&
                         hymn.author.deathYear &&
                         `(${hymn.author.birthYear}-${hymn.author.deathYear})`}
                     </p>
-                    {hymn.author.bio && <p className="text-sm mt-2 text-muted-foreground">{hymn.author.bio}</p>}
+                    {hymn.author.bio && <p className="text-xs sm:text-sm mt-2 text-muted-foreground">{hymn.author.bio}</p>}
                   </div>
                 )}
 
                 {hymn.category && (
-                  <div className="mt-4">
+                  <div className="mt-3 sm:mt-4">
                     <span className="inline-block bg-muted px-2 py-1 rounded text-xs">{hymn.category}</span>
                   </div>
                 )}
