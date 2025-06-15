@@ -16,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import PWAInstallPrompt from "@/components/pwa-install-prompt"
 import Fuse from "fuse.js"
+import { db } from "@/lib/db"
 
 // Cache keys
 const HYMNS_CACHE_KEY = "cached_hymns";
@@ -134,11 +135,26 @@ export default function HymnalApp() {
         throw new Error(`Failed to fetch hymns: ${response.status}`)
       }
 
-      const data = await response.json()
-      setHymns(data)
+      const data: Hymn[] = await response.json()
+
+      // Merge with user-edited hymns stored locally
+      let merged = data
+      if (typeof window !== "undefined") {
+        try {
+          const userHymns = await db.hymns.toArray()
+          const map = new Map<string | number, Hymn>()
+          data.forEach((h) => map.set(h.hymnNumber, h))
+          userHymns.forEach((uh: Hymn) => map.set(uh.hymnNumber, { ...map.get(uh.hymnNumber), ...uh }))
+          merged = Array.from(map.values())
+        } catch (e) {
+          console.error("Dexie load error", e)
+        }
+      }
+
+      setHymns(merged)
       
       // Save to cache for offline use
-      saveToCache(data);
+      saveToCache(merged);
 
       // Show directory info if we're using fallback data
       // This is a simple heuristic - if we have exactly the number of hymns in our fallback data
@@ -262,14 +278,34 @@ export default function HymnalApp() {
     setShowNewHymnDialog(true);
   }
 
-  const handleHymnCreated = () => {
-    // Reload the hymns list after creating a new hymn
-    fetchHymns();
-    setShowNewHymnDialog(false);
+  const handleHymnCreated = (newHymn: Hymn) => {
+    setHymns((prev) => {
+      const next = [...prev, newHymn]
+      saveToCache(next)
+      return next
+    })
+    setShowNewHymnDialog(false)
     toast({
       title: "Success",
       description: newHymnType === 'hymn' ? "New hymn created successfully" : "New chorus created successfully",
-    });
+    })
+  }
+
+  const handleHymnUpdatedLocal = (updated?: Hymn) => {
+    if (updated) {
+      setHymns((prev) => {
+        const next = prev.map((h) => (h.hymnNumber === updated.hymnNumber ? updated : h))
+        saveToCache(next)
+        return next
+      })
+    } else {
+      // deletion case: fetch from Dexie only
+      setHymns((prev) => {
+        const next = prev.filter((h) => h.hymnNumber !== selectedHymn)
+        saveToCache(next)
+        return next
+      })
+    }
   }
 
   const getDisplayHymns = () => {
@@ -377,12 +413,12 @@ export default function HymnalApp() {
           <>
             <div className="flex justify-end px-2 sm:px-4 pt-2 sm:pt-4">
               {activeTab === "all" ? (
-                <Button size="sm" onClick={handleAddNewHymn} className="flex items-center gap-1" disabled={isOffline}>
+                <Button size="sm" onClick={handleAddNewHymn} className="flex items-center gap-1">
                   <Plus className="h-4 w-4" />
                   <span>Add Hymn</span>
                 </Button>
               ) : activeTab === "choruses" ? (
-                <Button size="sm" onClick={handleAddNewChorus} className="flex items-center gap-1" disabled={isOffline}>
+                <Button size="sm" onClick={handleAddNewChorus} className="flex items-center gap-1">
                   <Plus className="h-4 w-4" />
                   <span>Add Chorus</span>
                 </Button>
@@ -406,7 +442,7 @@ export default function HymnalApp() {
           isFavorite={favorites.some(f => f === selectedHymn)}
           onToggleFavorite={() => toggleFavorite(selectedHymn)}
           isOffline={isOffline}
-          onHymnUpdated={fetchHymns}
+          onHymnUpdated={handleHymnUpdatedLocal}
         />
       )}
 

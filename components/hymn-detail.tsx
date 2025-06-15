@@ -2,7 +2,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { X, Heart, Edit, Save } from "lucide-react"
+import { X, Heart, Edit, Save, Trash } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,7 +16,7 @@ interface HymnDetailProps {
   isFavorite: boolean
   onToggleFavorite: () => void
   isOffline?: boolean
-  onHymnUpdated?: () => void
+  onHymnUpdated?: (updated?: Hymn) => void
 }
 
 export default function HymnDetail({ 
@@ -41,15 +41,6 @@ export default function HymnDetail({
   const { toast } = useToast()
 
   const handleSave = async () => {
-    if (isOffline) {
-      toast({
-        title: "Offline Mode",
-        description: "Cannot save changes while offline. Please connect to the internet.",
-        variant: "destructive",
-      })
-      return;
-    }
-
     if (!editedLyrics.trim()) {
       toast({
         title: "Error",
@@ -89,28 +80,27 @@ export default function HymnDetail({
       }
 
       // Update was successful
-      hymn.title = editedTitle
-      hymn.lyrics = editedLyrics
-      hymn.category = editedCategory
-      hymn.author = editedAuthor
+      const updated: Hymn = {
+        ...hymn,
+        title: editedTitle,
+        lyrics: editedLyrics,
+        category: editedCategory,
+        author: editedAuthor,
+      }
+
+      Object.assign(hymn, updated)
       setIsEditing(false)
 
-      // Call the update callback if provided
-      if (onHymnUpdated) {
-        onHymnUpdated()
-      }
+      if (onHymnUpdated) onHymnUpdated(updated)
 
       toast({
         title: "Success",
         description: "Hymn updated successfully",
       })
     } catch (error) {
-      console.error("Error saving hymn:", error)
-      toast({
-        title: "Error",
-        description: "Failed to save changes. Please try again.",
-        variant: "destructive",
-      })
+      console.error("Remote save failed, falling back to local Dexie save", error)
+      // Fall back to local save
+      await performLocalSave()
     } finally {
       setIsSaving(false)
     }
@@ -122,6 +112,54 @@ export default function HymnDetail({
       [field]: value
     });
   };
+
+  // Allow saving locally when offline
+  const performLocalSave = async () => {
+    try {
+      const updated: Hymn = {
+        ...hymn,
+        title: editedTitle,
+        lyrics: editedLyrics,
+        category: editedCategory,
+        author: editedAuthor,
+      }
+      const { db } = await import("@/lib/db")
+      await db.hymns.put(updated)
+
+      const updatedHymn: Hymn = {
+        ...hymn,
+        title: editedTitle,
+        lyrics: editedLyrics,
+        category: editedCategory,
+        author: editedAuthor,
+      }
+
+      Object.assign(hymn, updatedHymn)
+      setIsEditing(false)
+
+      if (onHymnUpdated) onHymnUpdated(updatedHymn)
+
+      toast({ title: "Saved locally", description: "Your changes are stored on this device." })
+    } catch (err) {
+      console.error("Local save error", err)
+      toast({ title: "Error", description: "Failed to save locally.", variant: "destructive" })
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm("Delete this hymn?")) return
+    try {
+      const response = await fetch(`/api/hymns/${hymn.hymnNumber}`, { method: "DELETE" })
+      if (!response.ok) throw new Error("remote delete failed")
+    } catch {
+      const { db } = await import("@/lib/db")
+      await db.hymns.delete(hymn.hymnNumber as any)
+    }
+
+    if (onHymnUpdated) onHymnUpdated(undefined)
+    toast({ title: "Deleted", description: "Hymn removed." })
+    onClose()
+  }
 
   return (
     <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
@@ -149,7 +187,6 @@ export default function HymnDetail({
                 size="icon" 
                 onClick={() => setIsEditing(true)} 
                 aria-label="Edit hymn"
-                disabled={isOffline}
               >
                 <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
@@ -168,6 +205,9 @@ export default function HymnDetail({
             </Button>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleDelete}>
+              <Trash className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </div>
         </SheetHeader>

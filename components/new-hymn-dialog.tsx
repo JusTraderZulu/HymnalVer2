@@ -20,7 +20,7 @@ interface NewHymnDialogProps {
   open: boolean
   type: 'hymn' | 'chorus'
   onOpenChange: (open: boolean) => void
-  onHymnCreated: () => void
+  onHymnCreated: (hymn: Hymn) => void
   existingHymns: Hymn[]
 }
 
@@ -123,20 +123,36 @@ export default function NewHymnDialog({
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || `Failed to create ${type}`)
+        throw new Error(`FAILED_REMOTE_CREATE`)
       }
 
-      // Success
-      onHymnCreated()
+      const newHymn: Hymn = {
+        hymnNumber,
+        title,
+        lyrics,
+        category: category || "",
+        author: authorName ? { name: authorName } : undefined,
+      } as Hymn
+      onHymnCreated(newHymn)
       resetForm()
     } catch (error) {
-      console.error(`Error creating ${type}:`, error)
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : `Failed to create ${type}`,
-        variant: "destructive",
-      })
+      console.warn("Remote create failed, saving locally", error)
+      try {
+        const { db } = await import("@/lib/db")
+        const newHymn: Hymn = {
+          hymnNumber,
+          title,
+          lyrics,
+          category: category || "",
+          author: authorName ? { name: authorName } : undefined,
+        } as Hymn
+        await db.hymns.put(newHymn)
+        onHymnCreated(newHymn)
+        resetForm()
+        toast({ title: "Saved locally", description: "New hymn added to your personal hymnal." })
+      } catch (err) {
+        toast({ title: "Error", description: "Failed to save hymn.", variant: "destructive" })
+      }
     } finally {
       setIsSubmitting(false)
     }
