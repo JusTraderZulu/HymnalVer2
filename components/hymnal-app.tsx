@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Search, Plus, WifiOff } from "lucide-react"
 import HymnList from "@/components/hymn-list"
@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import PWAInstallPrompt from "@/components/pwa-install-prompt"
+import Fuse from "fuse.js"
 
 // Cache keys
 const HYMNS_CACHE_KEY = "cached_hymns";
@@ -35,6 +36,14 @@ export default function HymnalApp() {
   const [showNewHymnDialog, setShowNewHymnDialog] = useState(false)
   const [newHymnType, setNewHymnType] = useState<'hymn' | 'chorus'>('hymn')
   const { toast } = useToast()
+
+  // Normalize strings for search: lowercase, strip punctuation, collapse whitespace
+  const normalize = (str: string) =>
+    str
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/gi, " ") // replace punctuation with space
+      .replace(/\s+/g, " ") // collapse multiple spaces
+      .trim()
 
   // Check online status
   useEffect(() => {
@@ -164,23 +173,52 @@ export default function HymnalApp() {
     fetchHymns()
   }, [toast])
 
-  const filteredHymns = hymns.filter(
-    (hymn) =>
-      hymn.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      String(hymn.hymnNumber).includes(searchQuery) ||
-      hymn.lyrics?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (hymn.author?.name && hymn.author.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (hymn.category && hymn.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (hymn.firstLine && hymn.firstLine.toLowerCase().includes(searchQuery.toLowerCase())),
-  )
+  // after hymns state defined
+  const fuse = useMemo(() =>
+    new Fuse(hymns, {
+      keys: [
+        {
+          name: "title",
+          getFn: (item: Hymn) => normalize(item.title || ""),
+          weight: 0.4,
+        },
+        {
+          name: "lyrics",
+          getFn: (item: Hymn) => normalize(item.lyrics || ""),
+          weight: 0.3,
+        },
+        {
+          name: "firstLine",
+          getFn: (item: Hymn) => normalize(item.firstLine || ""),
+          weight: 0.15,
+        },
+        {
+          name: "author.name",
+          getFn: (item: Hymn) => normalize(item.author?.name || ""),
+          weight: 0.1,
+        },
+        {
+          name: "category",
+          getFn: (item: Hymn) => normalize(item.category || ""),
+          weight: 0.05,
+        },
+      ],
+      threshold: 0.4,
+      ignoreLocation: true,
+      includeScore: false,
+    }), [hymns])
+
+  const filteredHymns = searchQuery
+    ? fuse.search(normalize(searchQuery)).map((res: Fuse.FuseResult<Hymn>) => res.item)
+    : hymns;
 
   // Filter for choruses (hymns with ID starting with 's')
-  const chorusHymns = hymns.filter((hymn) => 
+  const chorusHymns = hymns.filter((hymn: Hymn) => 
     typeof hymn.hymnNumber === 'string' && hymn.hymnNumber.toString().toLowerCase().startsWith('s')
   )
 
   // Filter for regular hymns (not starting with 's')
-  const regularHymns = hymns.filter((hymn) => 
+  const regularHymns = hymns.filter((hymn: Hymn) => 
     !(typeof hymn.hymnNumber === 'string' && hymn.hymnNumber.toString().toLowerCase().startsWith('s'))
   )
 
@@ -244,7 +282,7 @@ export default function HymnalApp() {
       case "recent":
         return recentHymns;
       case "choruses":
-        return searchQuery ? searchFiltered.filter(hymn => 
+        return searchQuery ? searchFiltered.filter((hymn: Hymn) => 
           typeof hymn.hymnNumber === 'string' && hymn.hymnNumber.toString().toLowerCase().startsWith('s')
         ) : chorusHymns;
       case "all":

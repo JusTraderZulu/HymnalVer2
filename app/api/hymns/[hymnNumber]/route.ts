@@ -6,12 +6,14 @@ import type { Hymn } from "@/types/hymn"
 // Define the directory where hymn JSON files are stored
 const hymnsDirectory = path.join(process.cwd(), "hymns")
 
+// Force recompilation - params fix applied
 export async function PUT(
   request: Request,
-  { params }: { params: { hymnNumber: string } }
+  { params }: { params: Promise<{ hymnNumber: string }> }
 ) {
   try {
-    const hymnNumber = params.hymnNumber
+    // Fixed: await params before accessing properties
+    const { hymnNumber } = await params
     const data = await request.json()
 
     // Validate required fields
@@ -58,7 +60,9 @@ export async function PUT(
       ...existingHymn,
       title: data.title,
       lyrics: data.lyrics,
-      category: data.category || "",
+      category: typeof data.category === "string" && data.category.trim() !== ""
+        ? data.category
+        : existingHymn.category || "",
       author: data.author || existingHymn.author || { name: "" }
     }
 
@@ -86,10 +90,10 @@ export async function PUT(
 
 export async function GET(
   request: Request,
-  { params }: { params: { hymnNumber: string } }
+  { params }: { params: Promise<{ hymnNumber: string }> }
 ) {
   try {
-    const hymnNumber = params.hymnNumber
+    const { hymnNumber } = await params
 
     // Ensure the hymns directory exists
     if (!fs.existsSync(hymnsDirectory)) {

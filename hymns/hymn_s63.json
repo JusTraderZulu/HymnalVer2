@@ -1,12 +1,14 @@
 {
-  "hymnNumber": "s63",
-  "title": "There'S A Meeting Here Tonight,",
-  "author": {
-    "name": "",
-    "birthYear": "",
-    "deathYear": "",
-    "bio": ""
-  },
-  "category": "Chorus",
-  "lyrics": "There's a meeting here tonight,\nThere's a meeting here tonight,\nGo and tell them,\nThere's a meeting here tonight.\nGo down the road"
+    "hymnNumber": "s63",
+    "title": "There'S A Meeting Here Tonight,",
+    "author": {
+        "name": "",
+        "birthYear": "",
+        "deathYear": "",
+        "bio": ""
+    },
+    "category": "Chorus",
+    "lyrics": "There's a meeting here tonight,\nThere's a meeting here tonight,\nGo and tell them,\nThere's a meeting here tonight.\n",
+    "lowercaseTitle": "there's a meeting here tonight,",
+    "lowercaseLyrics": "there's a meeting here tonight,\nthere's a meeting here tonight,\ngo and tell them,\nthere's a meeting here tonight.\n"
 }
