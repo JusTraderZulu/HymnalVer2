@@ -164,7 +164,7 @@ export default function HymnDetail({
   return (
     <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="w-full sm:max-w-md p-0 flex flex-col h-full max-h-[100dvh] overflow-hidden">
-        <SheetHeader className="flex flex-row items-center justify-between p-2 sm:p-4 pb-2 border-b shrink-0">
+        <SheetHeader className="flex flex-row items-center justify-between p-2 sm:p-4 pt-12 sm:pt-4 pb-2 border-b shrink-0">
           <SheetTitle className="text-left">
             <span className="mr-1 sm:mr-2 inline-block bg-primary/10 text-primary font-medium rounded-full w-7 h-7 sm:w-8 sm:h-8 text-center leading-7 sm:leading-8 text-sm sm:text-base">
               {hymn.hymnNumber}
@@ -180,7 +180,7 @@ export default function HymnDetail({
               <span className="text-base sm:text-lg">{hymn.title}</span>
             )}
           </SheetTitle>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 mt-8 sm:mt-0">
             {!isEditing ? (
               <Button 
                 variant="ghost" 
@@ -202,9 +202,6 @@ export default function HymnDetail({
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFavorite ? "fill-primary text-primary" : "text-muted-foreground"}`} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             <Button variant="ghost" size="icon" onClick={handleDelete}>
               <Trash className="h-4 w-4 sm:h-5 sm:w-5" />

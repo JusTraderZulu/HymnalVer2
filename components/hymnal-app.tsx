@@ -194,6 +194,11 @@ export default function HymnalApp() {
     new Fuse(hymns, {
       keys: [
         {
+          name: "hymnNumber",
+          getFn: (item: Hymn) => normalize(String(item.hymnNumber || "")),
+          weight: 0.5,
+        },
+        {
           name: "title",
           getFn: (item: Hymn) => normalize(item.title || ""),
           weight: 0.4,
