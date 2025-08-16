@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, WifiOff } from "lucide-react"
+import { Search, Plus, WifiOff, Moon, Sun } from "lucide-react"
 import HymnList from "@/components/hymn-list"
 import HymnDetail from "@/components/hymn-detail"
 import NewHymnDialog from "@/components/new-hymn-dialog"
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import PWAInstallPrompt from "@/components/pwa-install-prompt"
 import Fuse from "fuse.js"
 import { db } from "@/lib/db"
+import { useTheme } from "next-themes"
 
 // Cache keys
 const HYMNS_CACHE_KEY = "cached_hymns";
@@ -37,6 +38,7 @@ export default function HymnalApp() {
   const [showNewHymnDialog, setShowNewHymnDialog] = useState(false)
   const [newHymnType, setNewHymnType] = useState<'hymn' | 'chorus'>('hymn')
   const { toast } = useToast()
+  const { theme, setTheme, resolvedTheme } = useTheme()
 
   // Normalize strings for search: lowercase, strip punctuation, collapse whitespace
   const normalize = (str: string) =>
@@ -381,6 +383,17 @@ export default function HymnalApp() {
               onChange={handleSearch}
               className="pl-10"
             />
+            <button
+              aria-label="Toggle theme"
+              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-8 w-8 rounded-md border hover:bg-accent"
+              onClick={() => setTheme((resolvedTheme === 'dark') ? 'light' : 'dark')}
+            >
+              {resolvedTheme === 'dark' ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
