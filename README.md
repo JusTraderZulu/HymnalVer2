@@ -99,9 +99,12 @@ When deployed on Vercel, the app uses an ephemeral filesystem, which means:
 - Users' favorites and recently viewed lists will persist in their browsers' localStorage
 
 For a production environment that requires permanent hymn storage:
-- Consider implementing a database solution (MongoDB, MySQL, etc.)
-- Use a file storage service like AWS S3 or Firebase Storage
-- For simpler needs, you could use a CMS or even a GitHub-based workflow to update the hymns
+- Supabase (recommended):
+  - Create a Supabase project
+  - Run `supabase/schema.sql`
+  - Set env vars `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+  - The API will read/write hymns from Supabase and fall back to local JSON if env not set
+- Other options: MongoDB Atlas, Neon/Postgres, PlanetScale/MySQL, Firebase
 
 ## License
 

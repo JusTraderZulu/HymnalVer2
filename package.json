@@ -11,6 +11,7 @@
     "pre-deploy-check": "node scripts/pre-deploy-check.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",

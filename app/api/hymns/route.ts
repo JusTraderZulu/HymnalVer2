@@ -3,6 +3,7 @@ import fs from "fs"
 import path from "path"
 import type { Hymn } from "@/types/hymn"
 import { hymns as fallbackHymns } from "@/data/hymns"
+import { supabaseAdmin, hasSupabaseEnv } from "@/lib/supabase"
 
 // Define the directory where hymn JSON files are stored
 const hymnsDirectory = path.join(process.cwd(), "hymns")
@@ -29,6 +30,15 @@ function sortHymns(hymns: Hymn[]): Hymn[] {
 
 export async function GET() {
   try {
+    if (hasSupabaseEnv && supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from("hymns")
+        .select("hymnNumber,title,lyrics,category,author")
+      if (error) throw error
+      if (data && data.length > 0) {
+        return NextResponse.json(sortHymns(data as any))
+      }
+    }
     // Check if the directory exists
     if (!fs.existsSync(hymnsDirectory)) {
       console.log("Hymns directory not found, using fallback data")
@@ -137,34 +147,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Lyrics are required" }, { status: 400 });
     }
     
-    // Ensure the hymns directory exists
-    if (!fs.existsSync(hymnsDirectory)) {
-      try {
-        fs.mkdirSync(hymnsDirectory, { recursive: true });
-        console.log(`Created hymns directory at ${hymnsDirectory}`);
-      } catch (err) {
-        console.error("Failed to create hymns directory:", err);
-        return NextResponse.json(
-          { error: "Hymns directory doesn't exist and couldn't be created" },
-          { status: 500 }
-        );
+    const hymnNumber = String(data.hymnNumber);
+
+    // If Supabase is available, write to DB
+    if (hasSupabaseEnv && supabaseAdmin) {
+      const { data: inserted, error } = await supabaseAdmin
+        .from("hymns")
+        .insert({
+          hymnNumber,
+          title: data.title,
+          lyrics: data.lyrics,
+          category: data.category || "",
+          author: data.author || { name: "" }
+        })
+        .select()
+        .single()
+      if (error) {
+        console.error("Supabase insert error", error)
+      } else if (inserted) {
+        return NextResponse.json(inserted, { status: 201 })
       }
     }
-    
-    // Format hymn number for filename
-    const hymnNumber = String(data.hymnNumber);
+
+    // Fallback to filesystem
+    if (!fs.existsSync(hymnsDirectory)) {
+      fs.mkdirSync(hymnsDirectory, { recursive: true });
+    }
     const fileName = `hymn_${hymnNumber}.json`;
     const filePath = path.join(hymnsDirectory, fileName);
-    
-    // Check if a hymn with this number already exists
     if (fs.existsSync(filePath)) {
       return NextResponse.json(
         { error: `A hymn with number ${hymnNumber} already exists` },
         { status: 409 }
       );
     }
-    
-    // Prepare the hymn object
     const newHymn: Hymn = {
       hymnNumber: data.hymnNumber,
       title: data.title,
@@ -172,10 +188,7 @@ export async function POST(request: Request) {
       category: data.category || "",
       author: data.author || { name: "" }
     };
-    
-    // Write the hymn to the file
     fs.writeFileSync(filePath, JSON.stringify(newHymn, null, 2), "utf8");
-    
     return NextResponse.json(newHymn, { status: 201 });
   } catch (error) {
     console.error("Error creating hymn:", error);

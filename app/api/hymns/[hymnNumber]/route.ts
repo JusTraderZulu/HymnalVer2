@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import fs from "fs"
 import path from "path"
 import type { Hymn } from "@/types/hymn"
+import { supabaseAdmin, hasSupabaseEnv } from "@/lib/supabase"
 
 // Define the directory where hymn JSON files are stored
 const hymnsDirectory = path.join(process.cwd(), "hymns")
@@ -12,7 +13,6 @@ export async function PUT(
   { params }: { params: Promise<{ hymnNumber: string }> }
 ) {
   try {
-    // Fixed: await params before accessing properties
     const { hymnNumber } = await params
     const data = await request.json()
 
@@ -25,14 +25,31 @@ export async function PUT(
       return NextResponse.json({ error: "Lyrics are required" }, { status: 400 })
     }
 
-    // Ensure the hymns directory exists
+    // If Supabase available, update in DB
+    if (hasSupabaseEnv && supabaseAdmin) {
+      const { data: updated, error } = await supabaseAdmin
+        .from("hymns")
+        .update({
+          title: data.title,
+          lyrics: data.lyrics,
+          category: typeof data.category === "string" && data.category.trim() !== "" ? data.category : undefined,
+          author: data.author
+        })
+        .eq("hymnNumber", hymnNumber)
+        .select()
+        .single()
+      if (!error && updated) {
+        return NextResponse.json(updated)
+      }
+    }
+
+    // Filesystem fallback
     if (!fs.existsSync(hymnsDirectory)) {
       return NextResponse.json(
         { error: "Hymns directory doesn't exist" },
         { status: 500 }
       )
     }
-
     // Find the hymn file
     const files = fs.readdirSync(hymnsDirectory)
     const hymnFile = files.find(
@@ -95,14 +112,25 @@ export async function GET(
   try {
     const { hymnNumber } = await params
 
-    // Ensure the hymns directory exists
+    // Try Supabase first
+    if (hasSupabaseEnv && supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from("hymns")
+        .select("hymnNumber,title,lyrics,category,author")
+        .eq("hymnNumber", hymnNumber)
+        .maybeSingle()
+      if (!error && data) {
+        return NextResponse.json(data)
+      }
+    }
+
+    // Filesystem fallback
     if (!fs.existsSync(hymnsDirectory)) {
       return NextResponse.json(
         { error: "Hymns directory doesn't exist" },
         { status: 500 }
       )
     }
-
     // Find the hymn file
     const files = fs.readdirSync(hymnsDirectory)
     const hymnFile = files.find(
