@@ -1,14 +1,14 @@
 {
-    "hymnNumber": "s10",
-    "title": "What A Mighty God We Serve,",
-    "author": {
-        "name": "",
-        "birthYear": "",
-        "deathYear": "",
-        "bio": ""
-    },
-    "category": "Chorus",
-    "lyrics": "What a mighty God we serve,\nWhat a mighty God we serve,\nAngels bow before Him,\nHeaven and Earth adore Him,\nWhat a mighty God we serve.\n",
-    "lowercaseTitle": "what a mighty god we serve,",
-    "lowercaseLyrics": "what a mighty god we serve,\nwhat a mighty god we serve,\nangels bow before him,\nheaven and earth adore him,\nwhat a mighty god we serve.\n"
+  "hymnNumber": "s10",
+  "title": "What A Mighty God We Serve,",
+  "author": {
+    "name": "",
+    "birthYear": "",
+    "deathYear": "",
+    "bio": ""
+  },
+  "category": "Chorus",
+  "lyrics": "What a mighty God we serve, What a mighty God we serve, Angels bow before Him, Heaven and Earth adore Him, What a mighty God we serve.",
+  "lowercaseTitle": "what a mighty god we serve,",
+  "lowercaseLyrics": "what a mighty god we serve,\nwhat a mighty god we serve,\nangels bow before him,\nheaven and earth adore him,\nwhat a mighty god we serve.\n"
 }

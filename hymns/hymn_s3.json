@@ -1,14 +1,14 @@
 {
-    "hymnNumber": "s3",
-    "title": "Praise God I Saw The Fire,",
-    "author": {
-        "name": "",
-        "birthYear": "",
-        "deathYear": "",
-        "bio": ""
-    },
-    "category": "Chorus",
-    "lyrics": "Praise God I saw the fire,\nPraise God l saw the light,\nOn my way I've seen the light,\nPraise God, Praise God.\n",
-    "lowercaseTitle": "praise god i saw the fire,",
-    "lowercaseLyrics": "praise god i saw the fire,\npraise god l saw the light,\non my way i've seen the light,\npraise god, praise god.\n"
+  "hymnNumber": "s3",
+  "title": "Praise God I Saw The Fire,",
+  "author": {
+    "name": "",
+    "birthYear": "",
+    "deathYear": "",
+    "bio": ""
+  },
+  "category": "Chorus",
+  "lyrics": "Praise God I saw the fire, Praise God l saw the light, On my way I've seen the light, Praise God, Praise God.",
+  "lowercaseTitle": "praise god i saw the fire,",
+  "lowercaseLyrics": "praise god i saw the fire,\npraise god l saw the light,\non my way i've seen the light,\npraise god, praise god.\n"
 }

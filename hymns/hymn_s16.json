@@ -1,14 +1,14 @@
 {
-    "hymnNumber": "s16",
-    "title": "We are going Home",
-    "author": {
-        "name": "",
-        "birthYear": "",
-        "deathYear": "",
-        "bio": ""
-    },
-    "category": "Chorus",
-    "lyrics": "We are going home\nOn the morning train,\nWe are going home,\n0n the morning train,\nWe are going home\nOn the morning train,\nBecause the evening train\nWill be too late.\n",
-    "lowercaseTitle": "we are going home",
-    "lowercaseLyrics": "we are going home\non the morning train,\nwe are going home,\n0n the morning train,\nwe are going home\non the morning train,\nbecause the evening train\nwill be too late.\n"
+  "hymnNumber": "s16",
+  "title": "We are going Home",
+  "author": {
+    "name": "",
+    "birthYear": "",
+    "deathYear": "",
+    "bio": ""
+  },
+  "category": "Chorus",
+  "lyrics": "We are going home On the morning train, We are going home, 0n the morning train, We are going home On the morning train, Because the evening train Will be too late.",
+  "lowercaseTitle": "we are going home",
+  "lowercaseLyrics": "we are going home\non the morning train,\nwe are going home,\n0n the morning train,\nwe are going home\non the morning train,\nbecause the evening train\nwill be too late.\n"
 }
