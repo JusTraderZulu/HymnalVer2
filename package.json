@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "generate-icons": "node scripts/generate-icons.js",
-    "pre-deploy-check": "node scripts/pre-deploy-check.js"
+    "pre-deploy-check": "node scripts/pre-deploy-check.js",
+    "upload:hymns": "node scripts/upload-hymns-to-supabase.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
