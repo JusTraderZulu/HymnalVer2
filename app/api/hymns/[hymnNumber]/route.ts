@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
 import type { Hymn } from "@/types/hymn"
 import { supabaseAdmin, hasSupabaseEnv } from "@/lib/supabase"
+import { isAdmin } from "@/lib/auth"
 
-// Define the directory where hymn JSON files are stored
-const hymnsDirectory = path.join(process.cwd(), "hymns")
+// Supabase-only implementation
 
 // Force recompilation - params fix applied
 export async function PUT(
@@ -13,6 +11,9 @@ export async function PUT(
   { params }: { params: Promise<{ hymnNumber: string }> }
 ) {
   try {
+    if (!isAdmin()) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
     const { hymnNumber } = await params
     const data = await request.json()
 
@@ -35,67 +36,21 @@ export async function PUT(
           category: typeof data.category === "string" && data.category.trim() !== "" ? data.category : undefined,
           author: data.author
         })
-        .eq("hymnNumber", hymnNumber)
-        .select()
+        .eq("hymnnumber", hymnNumber)
+        .select("hymnnumber,title,lyrics,category,author")
         .single()
       if (!error && updated) {
-        return NextResponse.json(updated)
+        return NextResponse.json({
+          hymnNumber: (updated as any).hymnnumber,
+          title: (updated as any).title,
+          lyrics: (updated as any).lyrics,
+          category: (updated as any).category ?? "",
+          author: (updated as any).author ?? { name: "" },
+        })
       }
     }
 
-    // Filesystem fallback
-    if (!fs.existsSync(hymnsDirectory)) {
-      return NextResponse.json(
-        { error: "Hymns directory doesn't exist" },
-        { status: 500 }
-      )
-    }
-    // Find the hymn file
-    const files = fs.readdirSync(hymnsDirectory)
-    const hymnFile = files.find(
-      (file) =>
-        file.startsWith(`hymn_${hymnNumber}.`) ||
-        file.startsWith(`hymn_${hymnNumber.toLowerCase()}.`) ||
-        file.startsWith(`hymn_${hymnNumber.toUpperCase()}.`)
-    )
-
-    if (!hymnFile) {
-      return NextResponse.json(
-        { error: `Hymn with number ${hymnNumber} not found` },
-        { status: 404 }
-      )
-    }
-
-    const filePath = path.join(hymnsDirectory, hymnFile)
-    
-    // Read the existing hymn
-    const existingHymnContent = fs.readFileSync(filePath, "utf8")
-    const existingHymn = JSON.parse(existingHymnContent)
-
-    // Update the hymn
-    const updatedHymn: Hymn = {
-      ...existingHymn,
-      title: data.title,
-      lyrics: data.lyrics,
-      category: typeof data.category === "string" && data.category.trim() !== ""
-        ? data.category
-        : existingHymn.category || "",
-      author: data.author || existingHymn.author || { name: "" }
-    }
-
-    // Create lowercase versions for search
-    if (updatedHymn.title) {
-      updatedHymn.lowercaseTitle = updatedHymn.title.toLowerCase()
-    }
-    
-    if (updatedHymn.lyrics) {
-      updatedHymn.lowercaseLyrics = updatedHymn.lyrics.toLowerCase()
-    }
-
-    // Write the updated hymn to the file
-    fs.writeFileSync(filePath, JSON.stringify(updatedHymn, null, 4), "utf8")
-
-    return NextResponse.json(updatedHymn)
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 })
   } catch (error) {
     console.error("Error updating hymn:", error)
     return NextResponse.json(
@@ -116,42 +71,22 @@ export async function GET(
     if (hasSupabaseEnv && supabaseAdmin) {
       const { data, error } = await supabaseAdmin
         .from("hymns")
-        .select("hymnNumber,title,lyrics,category,author")
-        .eq("hymnNumber", hymnNumber)
+        .select("hymnnumber,title,lyrics,category,author")
+        .eq("hymnnumber", hymnNumber)
         .maybeSingle()
       if (!error && data) {
-        return NextResponse.json(data)
+        const mapped = {
+          hymnNumber: (data as any).hymnnumber,
+          title: (data as any).title,
+          lyrics: (data as any).lyrics,
+          category: (data as any).category ?? "",
+          author: (data as any).author ?? { name: "" },
+        }
+        return NextResponse.json(mapped)
       }
     }
 
-    // Filesystem fallback
-    if (!fs.existsSync(hymnsDirectory)) {
-      return NextResponse.json(
-        { error: "Hymns directory doesn't exist" },
-        { status: 500 }
-      )
-    }
-    // Find the hymn file
-    const files = fs.readdirSync(hymnsDirectory)
-    const hymnFile = files.find(
-      (file) =>
-        file.startsWith(`hymn_${hymnNumber}.`) ||
-        file.startsWith(`hymn_${hymnNumber.toLowerCase()}.`) ||
-        file.startsWith(`hymn_${hymnNumber.toUpperCase()}.`)
-    )
-
-    if (!hymnFile) {
-      return NextResponse.json(
-        { error: `Hymn with number ${hymnNumber} not found` },
-        { status: 404 }
-      )
-    }
-
-    const filePath = path.join(hymnsDirectory, hymnFile)
-    const hymnContent = fs.readFileSync(filePath, "utf8")
-    const hymn = JSON.parse(hymnContent)
-
-    return NextResponse.json(hymn)
+    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 })
   } catch (error) {
     console.error("Error fetching hymn:", error)
     return NextResponse.json(
@@ -160,3 +95,30 @@ export async function GET(
     )
   }
 } 
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ hymnNumber: string }> }
+) {
+  try {
+    if (!isAdmin()) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const { hymnNumber } = await params
+    if (!(hasSupabaseEnv && supabaseAdmin)) {
+      return NextResponse.json({ error: "Supabase not configured" }, { status: 500 })
+    }
+    const { error } = await supabaseAdmin
+      .from("hymns")
+      .delete()
+      .eq("hymnnumber", hymnNumber)
+    if (error) {
+      console.error("Supabase delete error", error)
+      return NextResponse.json({ error: "Failed to delete hymn" }, { status: 500 })
+    }
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error deleting hymn:", error)
+    return NextResponse.json({ error: "Failed to delete hymn" }, { status: 500 })
+  }
+}

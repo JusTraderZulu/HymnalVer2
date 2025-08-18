@@ -122,6 +122,7 @@ export default function HymnDetail({
         lyrics: editedLyrics,
         category: editedCategory,
         author: editedAuthor,
+        pendingSync: true,
       }
       const { db } = await import("@/lib/db")
       await db.hymns.put(updated)
@@ -132,6 +133,7 @@ export default function HymnDetail({
         lyrics: editedLyrics,
         category: editedCategory,
         author: editedAuthor,
+        pendingSync: true,
       }
 
       Object.assign(hymn, updatedHymn)
@@ -154,6 +156,8 @@ export default function HymnDetail({
     } catch {
       const { db } = await import("@/lib/db")
       await db.hymns.delete(hymn.hymnNumber as any)
+      // mark pending delete for later sync
+      try { await (db as any).pendingDeletes.put({ hymnNumber: hymn.hymnNumber }) } catch {}
     }
 
     if (onHymnUpdated) onHymnUpdated(undefined)

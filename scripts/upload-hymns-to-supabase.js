@@ -39,7 +39,8 @@ async function main() {
       const category = json.category ? String(json.category) : '';
       const author = json.author && typeof json.author === 'object' ? json.author : null;
 
-      batch.push({ hymnNumber, title, lyrics, category, author });
+      // Use lowercase keys to match Postgres' unquoted identifier behavior
+      batch.push({ hymnnumber: hymnNumber, title, lyrics, category, author });
       processed++;
     } catch (e) {
       failed++;
@@ -54,8 +55,8 @@ async function main() {
     const chunk = batch.slice(i, i + chunkSize);
     const { error, count } = await supabase
       .from('hymns')
-      .upsert(chunk, { onConflict: 'hymnNumber' })
-      .select('hymnNumber', { count: 'exact' });
+      .upsert(chunk, { onConflict: 'hymnnumber' })
+      .select('hymnnumber', { count: 'exact' });
     if (error) {
       console.error('Upsert error:', error.message);
       failed += chunk.length;

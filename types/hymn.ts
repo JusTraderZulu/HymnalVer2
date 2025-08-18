@@ -15,4 +15,5 @@ export interface Hymn {
   firstLine?: string
   lowercaseTitle?: string
   lowercaseLyrics?: string
+  pendingSync?: boolean
 }

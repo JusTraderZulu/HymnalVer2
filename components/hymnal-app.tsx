@@ -50,7 +50,12 @@ export default function HymnalApp() {
 
   // Check online status
   useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
+    const handleOnline = () => {
+      setIsOffline(false);
+      // attempt to sync and refresh data on reconnect
+      syncLocalEdits();
+      fetchHymns();
+    };
     const handleOffline = () => setIsOffline(true);
 
     // Set initial status
@@ -92,6 +97,48 @@ export default function HymnalApp() {
       return null;
     }
   };
+
+  // Attempt to push any locally edited hymns when we come back online
+  const syncLocalEdits = async () => {
+    try {
+      const local = await db.hymns.toArray()
+      const edited = local.filter(h => h.pendingSync)
+      if (edited.length === 0) return
+      for (const h of edited) {
+        try {
+          const res = await fetch(`/api/hymns/${h.hymnNumber}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: h.title,
+              lyrics: h.lyrics,
+              category: h.category || "",
+              author: h.author || { name: "" },
+            }),
+          })
+          if (res.ok) {
+            await db.hymns.put({ ...h, pendingSync: false })
+          }
+        } catch {
+          // stay pending
+        }
+      }
+      // Sync pending deletes
+      try {
+        const pendingDel = await (db as any).pendingDeletes?.toArray?.()
+        if (pendingDel && pendingDel.length > 0) {
+          for (const d of pendingDel) {
+            try {
+              await fetch(`/api/hymns/${d.hymnNumber}`, { method: "DELETE" })
+              await (db as any).pendingDeletes.delete(d.hymnNumber)
+            } catch {}
+          }
+        }
+      } catch {}
+    } catch (e) {
+      console.error("Sync error", e)
+    }
+  }
 
   // Save hymns to cache
   const saveToCache = (hymnsData: Hymn[]) => {
@@ -189,6 +236,9 @@ export default function HymnalApp() {
 
   useEffect(() => {
     fetchHymns()
+    if (navigator.onLine) {
+      syncLocalEdits()
+    }
   }, [toast])
 
   // after hymns state defined
