@@ -26,22 +26,51 @@ export async function PUT(
       return NextResponse.json({ error: "Lyrics are required" }, { status: 400 })
     }
 
-    // If Supabase available, update in DB
+    // If Supabase available, update in DB (handle both hymnnumber and "hymnNumber")
     if (hasSupabaseEnv && supabaseAdmin) {
-      const { data: updated, error } = await supabaseAdmin
-        .from("hymns")
-        .update({
-          title: data.title,
-          lyrics: data.lyrics,
-          category: typeof data.category === "string" && data.category.trim() !== "" ? data.category : undefined,
-          author: data.author
-        })
-        .eq("hymnnumber", hymnNumber)
-        .select("hymnnumber,title,lyrics,category,author")
-        .single()
-      if (!error && updated) {
+      // Try lowercase column first
+      let updated: any | null = null
+      let upErr: any | null = null
+      {
+        const { data, error } = await supabaseAdmin
+          .from("hymns")
+          .update({
+            title: data.title,
+            lyrics: data.lyrics,
+            category:
+              typeof data.category === "string" && data.category.trim() !== ""
+                ? data.category
+                : undefined,
+            author: data.author,
+          })
+          .eq("hymnnumber", hymnNumber)
+          .select("*")
+          .single()
+        updated = data
+        upErr = error
+      }
+      if (upErr) {
+        // Retry with camelCase identifier
+        const { data, error } = await supabaseAdmin
+          .from("hymns")
+          .update({
+            title: data.title,
+            lyrics: data.lyrics,
+            category:
+              typeof data.category === "string" && data.category.trim() !== ""
+                ? data.category
+                : undefined,
+            author: data.author,
+          })
+          .eq("hymnNumber", hymnNumber)
+          .select("*")
+          .single()
+        updated = data
+        upErr = error
+      }
+      if (!upErr && updated) {
         return NextResponse.json({
-          hymnNumber: (updated as any).hymnnumber,
+          hymnNumber: (updated as any).hymnnumber ?? (updated as any).hymnNumber,
           title: (updated as any).title,
           lyrics: (updated as any).lyrics,
           category: (updated as any).category ?? "",
@@ -67,22 +96,43 @@ export async function GET(
   try {
     const { hymnNumber } = await params
 
-    // Try Supabase first
+    // Try Supabase first (handle both hymnnumber and "hymnNumber")
     if (hasSupabaseEnv && supabaseAdmin) {
-      const { data, error } = await supabaseAdmin
-        .from("hymns")
-        .select("hymnnumber,title,lyrics,category,author")
-        .eq("hymnnumber", hymnNumber)
-        .maybeSingle()
-      if (!error && data) {
-        const mapped = {
-          hymnNumber: (data as any).hymnnumber,
-          title: (data as any).title,
-          lyrics: (data as any).lyrics,
-          category: (data as any).category ?? "",
-          author: (data as any).author ?? { name: "" },
+      // Lowercase attempt
+      {
+        const { data, error } = await supabaseAdmin
+          .from("hymns")
+          .select("*")
+          .eq("hymnnumber", hymnNumber)
+          .maybeSingle()
+        if (!error && data) {
+          const mapped = {
+            hymnNumber: (data as any).hymnnumber ?? (data as any).hymnNumber,
+            title: (data as any).title,
+            lyrics: (data as any).lyrics,
+            category: (data as any).category ?? "",
+            author: (data as any).author ?? { name: "" },
+          }
+          return NextResponse.json(mapped)
         }
-        return NextResponse.json(mapped)
+      }
+      // CamelCase fallback
+      {
+        const { data, error } = await supabaseAdmin
+          .from("hymns")
+          .select("*")
+          .eq("hymnNumber", hymnNumber)
+          .maybeSingle()
+        if (!error && data) {
+          const mapped = {
+            hymnNumber: (data as any).hymnnumber ?? (data as any).hymnNumber,
+            title: (data as any).title,
+            lyrics: (data as any).lyrics,
+            category: (data as any).category ?? "",
+            author: (data as any).author ?? { name: "" },
+          }
+          return NextResponse.json(mapped)
+        }
       }
     }
 
@@ -108,12 +158,24 @@ export async function DELETE(
     if (!(hasSupabaseEnv && supabaseAdmin)) {
       return NextResponse.json({ error: "Supabase not configured" }, { status: 500 })
     }
-    const { error } = await supabaseAdmin
-      .from("hymns")
-      .delete()
-      .eq("hymnnumber", hymnNumber)
-    if (error) {
-      console.error("Supabase delete error", error)
+    // Try delete with lowercase column first, then camelCase
+    let delErr: any | null = null
+    {
+      const { error } = await supabaseAdmin
+        .from("hymns")
+        .delete()
+        .eq("hymnnumber", hymnNumber)
+      delErr = error
+    }
+    if (delErr) {
+      const { error } = await supabaseAdmin
+        .from("hymns")
+        .delete()
+        .eq("hymnNumber", hymnNumber)
+      delErr = error
+    }
+    if (delErr) {
+      console.error("Supabase delete error", delErr)
       return NextResponse.json({ error: "Failed to delete hymn" }, { status: 500 })
     }
     return NextResponse.json({ success: true })

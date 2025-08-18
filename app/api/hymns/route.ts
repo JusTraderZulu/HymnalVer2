@@ -28,12 +28,13 @@ export async function GET() {
     if (!(hasSupabaseEnv && supabaseAdmin)) {
       return NextResponse.json([], { status: 200 })
     }
+    // Select all columns to be resilient to casing differences (hymnnumber vs "hymnNumber")
     const { data, error } = await supabaseAdmin
       .from("hymns")
-      .select("hymnnumber,title,lyrics,category,author")
+      .select("*")
     if (error) throw error
     const mapped = (data ?? []).map((row: any) => ({
-      hymnNumber: row.hymnnumber,
+      hymnNumber: row.hymnnumber ?? row.hymnNumber,
       title: row.title,
       lyrics: row.lyrics,
       category: row.category ?? "",
@@ -72,23 +73,46 @@ export async function POST(request: Request) {
     if (!(hasSupabaseEnv && supabaseAdmin)) {
       return NextResponse.json({ error: "Supabase not configured" }, { status: 500 })
     }
-    const { data: inserted, error } = await supabaseAdmin
-      .from("hymns")
-      .insert({
-        hymnnumber: hymnNumber,
-        title: data.title,
-        lyrics: data.lyrics,
-        category: data.category || "",
-        author: data.author || { name: "" }
-      })
-      .select("hymnnumber,title,lyrics,category,author")
-      .single()
-    if (error) {
-      console.error("Supabase insert error", error)
+    // Try insert using lowercase column; if that fails due to column name, retry with camelCase
+    let inserted: any | null = null
+    let insertError: any | null = null
+    {
+      const { data: ins, error: err } = await supabaseAdmin
+        .from("hymns")
+        .insert({
+          hymnnumber: hymnNumber,
+          title: data.title,
+          lyrics: data.lyrics,
+          category: data.category || "",
+          author: data.author || { name: "" },
+        })
+        .select("*")
+        .single()
+      inserted = ins
+      insertError = err
+    }
+    if (insertError) {
+      // Retry with camelCase id if the table was created with quoted identifiers
+      const { data: ins2, error: err2 } = await supabaseAdmin
+        .from("hymns")
+        .insert({
+          hymnNumber: hymnNumber,
+          title: data.title,
+          lyrics: data.lyrics,
+          category: data.category || "",
+          author: data.author || { name: "" },
+        })
+        .select("*")
+        .single()
+      inserted = ins2
+      insertError = err2
+    }
+    if (insertError || !inserted) {
+      console.error("Supabase insert error", insertError)
       return NextResponse.json({ error: "Failed to create hymn" }, { status: 500 })
     }
     const mapped = {
-      hymnNumber: (inserted as any).hymnnumber,
+      hymnNumber: (inserted as any).hymnnumber ?? (inserted as any).hymnNumber,
       title: (inserted as any).title,
       lyrics: (inserted as any).lyrics,
       category: (inserted as any).category ?? "",
