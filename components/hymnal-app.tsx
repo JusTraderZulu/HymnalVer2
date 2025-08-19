@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, WifiOff, Moon, Sun } from "lucide-react"
+import { Search, Plus, WifiOff, Moon, Sun, X } from "lucide-react"
 import HymnList from "@/components/hymn-list"
 import HymnDetail from "@/components/hymn-detail"
 import NewHymnDialog from "@/components/new-hymn-dialog"
@@ -431,8 +431,20 @@ export default function HymnalApp() {
               placeholder="Search by title, number, lyrics, author..."
               value={searchQuery}
               onChange={handleSearch}
-              className="pl-10"
+              className="pl-10 pr-20"
             />
+            {searchQuery && (
+              <button
+                aria-label="Clear search"
+                className="absolute right-12 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-8 w-8 rounded-md border hover:bg-accent"
+                onClick={() => {
+                  setSearchQuery("")
+                  setSelectedHymn(null)
+                }}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
             <button
               aria-label="Toggle theme"
               className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-8 w-8 rounded-md border hover:bg-accent"
