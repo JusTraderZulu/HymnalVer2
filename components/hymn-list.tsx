@@ -129,7 +129,7 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                   </Button>
                 </div>
                 {selectedHymn === hymn.hymnNumber && (
-                  <div className="p-3 sm:p-4 pt-0 bg-muted/50 rounded-b-lg overflow-hidden">
+                  <div className="p-3 sm:p-4 pt-0 bg-muted/50 rounded-b-lg">
                     {isAdmin && editing !== hymn.hymnNumber && (
                       <div className="mb-3 flex justify-end">
                         <Button size="sm" variant="outline" onClick={() => startEdit(hymn)}>
@@ -137,8 +137,9 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                         </Button>
                       </div>
                     )}
-                    {isAdmin && editing === hymn.hymnNumber ? (
-                      <div className="space-y-2">
+                    <div className="max-h-[60vh] overflow-y-auto">
+                      {isAdmin && editing === hymn.hymnNumber ? (
+                        <div className="space-y-2">
                         <div>
                           <Label>Title</Label>
                           <Input value={editedTitle} onChange={(e) => setEditedTitle(e.target.value)} />
@@ -159,9 +160,9 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                           <Button variant="outline" size="sm" onClick={cancelEdit}>Cancel</Button>
                           <Button size="sm" onClick={() => saveEdit(hymn.hymnNumber)} disabled={isSaving}>Save</Button>
                         </div>
-                      </div>
-                    ) : (
-                      <>
+                        </div>
+                      ) : (
+                        <>
                         <div className="whitespace-pre-line text-xs sm:text-sm">{hymn.lyrics}</div>
                         {hymn.author && (
                           <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
@@ -174,8 +175,9 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                           </div>
                         )}
                         {isAdmin && null}
-                      </>
-                    )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 )}
               </li>
