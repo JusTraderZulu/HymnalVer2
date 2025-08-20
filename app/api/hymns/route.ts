@@ -3,8 +3,6 @@ import type { Hymn } from "@/types/hymn"
 import { supabaseAdmin, hasSupabaseEnv } from "@/lib/supabase"
 import { isAdmin } from "@/lib/auth"
 
-const READ_ONLY = process.env.READ_ONLY === 'true'
-
 // Helper function to sort hymns with alphanumeric numbers
 function sortHymns(hymns: Hymn[]): Hymn[] {
   return [...hymns].sort((a, b) => {
@@ -52,9 +50,6 @@ export async function GET() {
 // Add POST method to create a new hymn
 export async function POST(request: Request) {
   try {
-    if (READ_ONLY) {
-      return NextResponse.json({ error: "Read-only mode" }, { status: 403 })
-    }
     if (!isAdmin()) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
