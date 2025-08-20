@@ -86,6 +86,32 @@ export default function HymnalApp() {
     };
   }, []);
 
+  // Refetch when window regains focus and we are online
+  useEffect(() => {
+    const handleFocus = () => {
+      if (navigator.onLine) {
+        fetchHymns();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
+  // React to child updates (e.g., after save), clear cache and refetch
+  useEffect(() => {
+    const onUpdated = () => {
+      try {
+        localStorage.removeItem(HYMNS_CACHE_KEY);
+        localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+      } catch {}
+      if (navigator.onLine) {
+        fetchHymns();
+      }
+    };
+    window.addEventListener('hymns-updated', onUpdated as any);
+    return () => window.removeEventListener('hymns-updated', onUpdated as any);
+  }, []);
+
   // Load hymns from cache if available
   const loadFromCache = (): Hymn[] | null => {
     try {

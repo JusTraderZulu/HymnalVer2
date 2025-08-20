@@ -97,6 +97,7 @@ export default function HymnDetail({
         title: "Success",
         description: "Hymn updated successfully",
       })
+      try { window.dispatchEvent(new CustomEvent('hymns-updated')) } catch {}
     } catch (error) {
       console.error("Remote save failed, falling back to local Dexie save", error)
       // Fall back to local save
@@ -142,6 +143,8 @@ export default function HymnDetail({
       if (onHymnUpdated) onHymnUpdated(updatedHymn)
 
       toast({ title: "Saved locally", description: "Your changes are stored on this device." })
+      // When back online, parent already syncs and refetches. Also signal listeners now.
+      try { window.dispatchEvent(new CustomEvent('hymns-updated')) } catch {}
     } catch (err) {
       console.error("Local save error", err)
       toast({ title: "Error", description: "Failed to save locally.", variant: "destructive" })
