@@ -40,6 +40,7 @@ export default function HymnalApp() {
   const [isOffline, setIsOffline] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedHymn, setSelectedHymn] = useState<number | string | null>(null)
+  const [editHymn, setEditHymn] = useState<number | string | null>(null)
   const [favorites, setFavorites] = useLocalStorage<(number | string)[]>("favorites", [])
   const [recentlyViewed, setRecentlyViewed] = useLocalStorage<(number | string)[]>("recentlyViewed", [])
   const [activeTab, setActiveTab] = useState("all")
@@ -594,19 +595,19 @@ export default function HymnalApp() {
               favorites={favorites}
               onToggleFavorite={toggleFavorite}
               isAdmin={!readOnly && isAdmin}
-              onEdit={(hn) => setSelectedHymn(hn)}
+              onEdit={(hn) => setEditHymn(hn)}
             />
           </>
         )}
       </main>
 
       {/* Admin edit sheet when selected and admin */}
-      {selectedHymn && !loading && !readOnly && isAdmin && (
+      {editHymn && !loading && !readOnly && isAdmin && (
         <HymnDetail
-          hymn={hymns.find((h) => h.hymnNumber === selectedHymn)!}
-          onClose={() => setSelectedHymn(null)}
-          isFavorite={favorites.some(f => f === selectedHymn)}
-          onToggleFavorite={() => toggleFavorite(selectedHymn)}
+          hymn={hymns.find((h) => h.hymnNumber === editHymn)!}
+          onClose={() => setEditHymn(null)}
+          isFavorite={favorites.some(f => f === editHymn)}
+          onToggleFavorite={() => editHymn && toggleFavorite(editHymn)}
           isOffline={isOffline}
           onHymnUpdated={handleHymnUpdatedLocal}
         />
