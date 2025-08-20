@@ -206,9 +206,9 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                         </div>
                       ) : (
                         <>
-                        <div className="whitespace-pre-line text-xs sm:text-sm">{hymn.lyrics}</div>
+                        <div className="whitespace-pre-line">{hymn.lyrics}</div>
                         {hymn.author && (
-                          <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
+                          <div className="mt-3 sm:mt-4 text-muted-foreground">
                             <p>
                               Author: {hymn.author.name}{" "}
                               {hymn.author.birthYear &&
