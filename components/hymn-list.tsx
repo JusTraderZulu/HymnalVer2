@@ -91,11 +91,15 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
           <ul className="space-y-2 sm:space-y-3">
             {hymns.map((hymn) => (
               <li key={getHymnKey(hymn)} className="border rounded-lg overflow-hidden">
-                <div className="flex items-center">
+                <div className={`flex items-center ${selectedHymn === hymn.hymnNumber ? 'sticky top-0 z-10 bg-background border-b' : ''}`}>
                   <Button
                     variant="ghost"
                     className="flex-1 flex items-center justify-between p-2 sm:p-4 h-auto"
-                    onClick={() => onHymnSelect(hymn.hymnNumber)}
+                    onClick={(e) => {
+                      onHymnSelect(hymn.hymnNumber)
+                      const li = (e.currentTarget as HTMLElement).closest('li')
+                      try { li && li.scrollIntoView({ block: 'start', behavior: 'smooth' }) } catch {}
+                    }}
                   >
                     <div className="flex items-center gap-2 sm:gap-3">
                       <span className="bg-primary/10 text-primary font-medium rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0 text-xs sm:text-sm">
@@ -126,6 +130,13 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                 </div>
                 {selectedHymn === hymn.hymnNumber && (
                   <div className="p-3 sm:p-4 pt-0 bg-muted/50">
+                    {isAdmin && editing !== hymn.hymnNumber && (
+                      <div className="mb-3 flex justify-end">
+                        <Button size="sm" variant="outline" onClick={() => startEdit(hymn)}>
+                          Edit
+                        </Button>
+                      </div>
+                    )}
                     {isAdmin && editing === hymn.hymnNumber ? (
                       <div className="space-y-2">
                         <div>
@@ -162,13 +173,7 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                             </p>
                           </div>
                         )}
-                        {isAdmin && (
-                          <div className="mt-3 flex justify-end">
-                            <Button size="sm" variant="outline" onClick={() => startEdit(hymn)}>
-                              Edit
-                            </Button>
-                          </div>
-                        )}
+                        {isAdmin && null}
                       </>
                     )}
                   </div>
