@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,23 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
   const [editedCategory, setEditedCategory] = useState("")
   const [editedAuthor, setEditedAuthor] = useState<{ name: string }>({ name: "" })
   const [isSaving, setIsSaving] = useState(false)
+
+  // Font scale for expanded content (persisted per device)
+  const [fontScale, setFontScale] = useState<number>(() => {
+    if (typeof window === 'undefined') return 1
+    const raw = localStorage.getItem('hymn_font_scale')
+    const n = raw ? parseFloat(raw) : 1
+    return isFinite(n) && n > 0 ? n : 1
+  })
+
+  useEffect(() => {
+    try { localStorage.setItem('hymn_font_scale', String(fontScale)) } catch {}
+  }, [fontScale])
+
+  const clamp = (n: number) => Math.min(1.6, Math.max(0.8, parseFloat(n.toFixed(2))))
+  const incFont = () => setFontScale((s) => clamp(s + 0.1))
+  const decFont = () => setFontScale((s) => clamp(s - 0.1))
+  const resetFont = () => setFontScale(1)
 
   const startEdit = (hymn: Hymn) => {
     setEditing(hymn.hymnNumber)
@@ -145,17 +162,25 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                 </div>
                 {selectedHymn === hymn.hymnNumber && (
                   <div className="p-3 sm:p-4 pt-0 bg-muted/50 rounded-b-lg">
-                    {isAdmin && editing !== hymn.hymnNumber && (
-                      <div className="mb-3 flex items-center justify-end gap-2">
-                        <Button size="sm" variant="destructive" onClick={() => deleteHymn(hymn.hymnNumber)} disabled={isSaving}>
-                          Delete
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => startEdit(hymn)}>
-                          Edit
-                        </Button>
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      {/* Font controls - visible for everyone */}
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={decFont} aria-label="Decrease font size">A-</Button>
+                        <Button size="sm" variant="outline" onClick={resetFont} aria-label="Reset font size">Reset</Button>
+                        <Button size="sm" variant="outline" onClick={incFont} aria-label="Increase font size">A+</Button>
                       </div>
-                    )}
-                    <div className="max-h-[60vh] overflow-y-auto">
+                      {isAdmin && editing !== hymn.hymnNumber && (
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="destructive" onClick={() => deleteHymn(hymn.hymnNumber)} disabled={isSaving}>
+                            Delete
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => startEdit(hymn)}>
+                            Edit
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="max-h-[60vh] overflow-y-auto" style={{ fontSize: `${(fontScale * 100).toFixed(0)}%` }}>
                       {isAdmin && editing === hymn.hymnNumber ? (
                         <div className="space-y-2">
                         <div>
