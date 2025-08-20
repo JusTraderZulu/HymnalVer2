@@ -54,6 +54,9 @@ export default function HymnalApp() {
   const [adminOpen, setAdminOpen] = useState(false)
   const [adminSecret, setAdminSecret] = useState("")
 
+  // Read-only mode (consumer build)
+  const readOnly = process.env.NEXT_PUBLIC_READ_ONLY === 'true'
+
   // Normalize strings for search: lowercase, strip punctuation, collapse whitespace
   const normalize = (str: string) =>
     str
@@ -141,6 +144,7 @@ export default function HymnalApp() {
   // Attempt to push any locally edited hymns when we come back online
   const syncLocalEdits = async () => {
     try {
+      if (readOnly) return
       const local = await db.hymns.toArray()
       const edited = local.filter(h => h.pendingSync)
       if (edited.length === 0) return
@@ -564,20 +568,24 @@ export default function HymnalApp() {
                 <RefreshCcw className="h-4 w-4" />
                 <span>Refresh</span>
               </Button>
-              <Button size="sm" onClick={() => setAdminOpen(true)} className="flex items-center gap-1" variant="outline">
-                <span>{isAdmin ? "Admin" : "Admin Login"}</span>
-              </Button>
-              {activeTab === "all" ? (
-                <Button size="sm" onClick={handleAddNewHymn} className="flex items-center gap-1">
-                  <Plus className="h-4 w-4" />
-                  <span>Add Hymn</span>
-                </Button>
-              ) : activeTab === "choruses" ? (
-                <Button size="sm" onClick={handleAddNewChorus} className="flex items-center gap-1">
-                  <Plus className="h-4 w-4" />
-                  <span>Add Chorus</span>
-                </Button>
-              ) : null}
+              {!readOnly && (
+                <>
+                  <Button size="sm" onClick={() => setAdminOpen(true)} className="flex items-center gap-1" variant="outline">
+                    <span>{isAdmin ? "Admin" : "Admin Login"}</span>
+                  </Button>
+                  {activeTab === "all" ? (
+                    <Button size="sm" onClick={handleAddNewHymn} className="flex items-center gap-1">
+                      <Plus className="h-4 w-4" />
+                      <span>Add Hymn</span>
+                    </Button>
+                  ) : activeTab === "choruses" ? (
+                    <Button size="sm" onClick={handleAddNewChorus} className="flex items-center gap-1">
+                      <Plus className="h-4 w-4" />
+                      <span>Add Chorus</span>
+                    </Button>
+                  ) : null}
+                </>
+              )}
             </div>
             <HymnList
               hymns={getDisplayHymns()}

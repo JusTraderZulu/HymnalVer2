@@ -27,6 +27,7 @@ export default function HymnDetail({
   isOffline = false,
   onHymnUpdated 
 }: HymnDetailProps) {
+  const readOnly = process.env.NEXT_PUBLIC_READ_ONLY === 'true'
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState(hymn.title)
   const [editedLyrics, setEditedLyrics] = useState(hymn.lyrics)
@@ -188,7 +189,7 @@ export default function HymnDetail({
             )}
           </SheetTitle>
           <div className="flex items-center gap-1 sm:gap-2 mt-8 sm:mt-0">
-            {!isEditing ? (
+            {!readOnly && !isEditing ? (
               <Button 
                 variant="ghost" 
                 size="icon" 
@@ -197,7 +198,7 @@ export default function HymnDetail({
               >
                 <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-            ) : (
+            ) : !readOnly && (
               <Button variant="ghost" size="icon" onClick={handleSave} disabled={isSaving} aria-label="Save changes">
                 <Save className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
@@ -210,9 +211,11 @@ export default function HymnDetail({
             >
               <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isFavorite ? "fill-primary text-primary" : "text-muted-foreground"}`} />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleDelete}>
-              <Trash className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
+            {!readOnly && (
+              <Button variant="ghost" size="icon" onClick={handleDelete}>
+                <Trash className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+            )}
           </div>
         </SheetHeader>
 
