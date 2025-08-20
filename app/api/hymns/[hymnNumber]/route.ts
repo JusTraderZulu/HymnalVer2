@@ -3,6 +3,8 @@ import type { Hymn } from "@/types/hymn"
 import { supabaseAdmin, hasSupabaseEnv } from "@/lib/supabase"
 import { isAdmin } from "@/lib/auth"
 
+const READ_ONLY = process.env.READ_ONLY === 'true'
+
 // Supabase-only implementation
 
 // Force recompilation - params fix applied
@@ -11,6 +13,9 @@ export async function PUT(
   { params }: { params: Promise<{ hymnNumber: string }> }
 ) {
   try {
+    if (READ_ONLY) {
+      return NextResponse.json({ error: "Read-only mode" }, { status: 403 })
+    }
     if (!isAdmin()) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -151,6 +156,9 @@ export async function DELETE(
   { params }: { params: Promise<{ hymnNumber: string }> }
 ) {
   try {
+    if (READ_ONLY) {
+      return NextResponse.json({ error: "Read-only mode" }, { status: 403 })
+    }
     if (!isAdmin()) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

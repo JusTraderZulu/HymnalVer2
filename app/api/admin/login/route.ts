@@ -2,7 +2,12 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { getAdminToken } from "@/lib/auth"
 
+const READ_ONLY = process.env.READ_ONLY === 'true'
+
 export async function POST(req: Request) {
+  if (READ_ONLY) {
+    return NextResponse.json({ error: "Read-only mode" }, { status: 403 })
+  }
   const { secret } = await req.json().catch(() => ({ secret: "" }))
   const appSecret = process.env.APP_ADMIN_SECRET
   if (!appSecret) {
