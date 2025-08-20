@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { Input } from "@/components/ui/input"
-import { Search, Plus, WifiOff, Moon, Sun, X } from "lucide-react"
+import { Search, Plus, WifiOff, Moon, Sun, X, RefreshCcw } from "lucide-react"
 import HymnList from "@/components/hymn-list"
 import HymnDetail from "@/components/hymn-detail"
 import NewHymnDialog from "@/components/new-hymn-dialog"
@@ -232,6 +232,20 @@ export default function HymnalApp() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleRefresh = async () => {
+    try {
+      // Clear cache keys, then refetch
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.removeItem(HYMNS_CACHE_KEY)
+          localStorage.removeItem(CACHE_TIMESTAMP_KEY)
+        } catch {}
+      }
+      await fetchHymns()
+      toast({ title: "Refreshed", description: "Fetched latest hymns from server." })
+    } catch {}
   }
 
   useEffect(() => {
@@ -491,7 +505,11 @@ export default function HymnalApp() {
           </div>
         ) : (
           <>
-            <div className="flex justify-end px-2 sm:px-4 pt-2 sm:pt-4">
+            <div className="flex justify-end px-2 sm:px-4 pt-2 sm:pt-4 gap-2">
+              <Button size="sm" onClick={handleRefresh} className="flex items-center gap-1" variant="outline">
+                <RefreshCcw className="h-4 w-4" />
+                <span>Refresh</span>
+              </Button>
               {activeTab === "all" ? (
                 <Button size="sm" onClick={handleAddNewHymn} className="flex items-center gap-1">
                   <Plus className="h-4 w-4" />
