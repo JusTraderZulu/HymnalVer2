@@ -67,6 +67,21 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
       setIsSaving(false)
     }
   }
+
+  const deleteHymn = async (hymnNumber: number | string) => {
+    try {
+      if (!confirm("Delete this hymn?")) return
+      setIsSaving(true)
+      const res = await fetch(`/api/hymns/${hymnNumber}`, { method: "DELETE" })
+      if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
+      toast({ title: "Deleted", description: "Hymn removed" })
+      try { window.dispatchEvent(new CustomEvent('hymns-updated')) } catch {}
+    } catch (e) {
+      toast({ title: "Error", description: "Failed to delete", variant: "destructive" })
+    } finally {
+      setIsSaving(false)
+    }
+  }
   // Generate a unique key for each hymn
   const getHymnKey = (hymn: Hymn): string => {
     // Use filename if available as it's guaranteed to be unique
@@ -131,7 +146,10 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                 {selectedHymn === hymn.hymnNumber && (
                   <div className="p-3 sm:p-4 pt-0 bg-muted/50 rounded-b-lg">
                     {isAdmin && editing !== hymn.hymnNumber && (
-                      <div className="mb-3 flex justify-end">
+                      <div className="mb-3 flex items-center justify-end gap-2">
+                        <Button size="sm" variant="destructive" onClick={() => deleteHymn(hymn.hymnNumber)} disabled={isSaving}>
+                          Delete
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => startEdit(hymn)}>
                           Edit
                         </Button>
