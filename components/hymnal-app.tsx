@@ -14,6 +14,15 @@ import type { Hymn } from "@/types/hymn"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog"
 import PWAInstallPrompt from "@/components/pwa-install-prompt"
 import Fuse from "fuse.js"
 import { db } from "@/lib/db"
@@ -39,6 +48,11 @@ export default function HymnalApp() {
   const [newHymnType, setNewHymnType] = useState<'hymn' | 'chorus'>('hymn')
   const { toast } = useToast()
   const { theme, setTheme, resolvedTheme } = useTheme()
+
+  // Admin UI state
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminOpen, setAdminOpen] = useState(false)
+  const [adminSecret, setAdminSecret] = useState("")
 
   // Normalize strings for search: lowercase, strip punctuation, collapse whitespace
   const normalize = (str: string) =>
@@ -254,6 +268,20 @@ export default function HymnalApp() {
       syncLocalEdits()
     }
   }, [toast])
+
+  // Check admin status once on mount
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const res = await fetch("/api/admin/status")
+        if (res.ok) {
+          const j = await res.json()
+          setIsAdmin(Boolean(j?.admin))
+        }
+      } catch {}
+    }
+    check()
+  }, [])
 
   // after hymns state defined
   const fuse = useMemo(() =>
@@ -510,6 +538,9 @@ export default function HymnalApp() {
                 <RefreshCcw className="h-4 w-4" />
                 <span>Refresh</span>
               </Button>
+              <Button size="sm" onClick={() => setAdminOpen(true)} className="flex items-center gap-1" variant="outline">
+                <span>{isAdmin ? "Admin" : "Admin Login"}</span>
+              </Button>
               {activeTab === "all" ? (
                 <Button size="sm" onClick={handleAddNewHymn} className="flex items-center gap-1">
                   <Plus className="h-4 w-4" />
@@ -551,6 +582,49 @@ export default function HymnalApp() {
         onHymnCreated={handleHymnCreated}
         existingHymns={hymns}
       />
+
+      {/* Admin Login Dialog */}
+      <AlertDialog open={adminOpen} onOpenChange={setAdminOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isAdmin ? "Admin" : "Admin Login"}</AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Input
+              type="password"
+              placeholder="Enter admin secret"
+              value={adminSecret}
+              onChange={(e) => setAdminSecret(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Close</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ secret: adminSecret.trim() })
+                  })
+                  if (res.ok) {
+                    setIsAdmin(true)
+                    setAdminOpen(false)
+                    setAdminSecret("")
+                    toast({ title: 'Admin enabled', description: 'You can now save edits to the server.' })
+                  } else {
+                    toast({ title: 'Invalid secret', description: 'Please try again.', variant: 'destructive' })
+                  }
+                } catch {
+                  toast({ title: 'Error', description: 'Network error.', variant: 'destructive' })
+                }
+              }}
+            >
+              {isAdmin ? 'Refresh Session' : 'Login'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
