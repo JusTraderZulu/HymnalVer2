@@ -15,14 +15,14 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     const { hymnNumber } = await params
-    const data = await request.json()
+    const payload = await request.json()
 
     // Validate required fields
-    if (!data.title) {
+    if (!payload.title) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 })
     }
 
-    if (!data.lyrics) {
+    if (!payload.lyrics) {
       return NextResponse.json({ error: "Lyrics are required" }, { status: 400 })
     }
 
@@ -32,40 +32,40 @@ export async function PUT(
       let updated: any | null = null
       let upErr: any | null = null
       {
-        const { data, error } = await supabaseAdmin
+        const { data: upd1, error } = await supabaseAdmin
           .from("hymns")
           .update({
-            title: data.title,
-            lyrics: data.lyrics,
+            title: payload.title,
+            lyrics: payload.lyrics,
             category:
-              typeof data.category === "string" && data.category.trim() !== ""
-                ? data.category
+              typeof payload.category === "string" && payload.category.trim() !== ""
+                ? payload.category
                 : undefined,
-            author: data.author,
+            author: payload.author,
           })
           .eq("hymnnumber", hymnNumber)
           .select("*")
           .single()
-        updated = data
+        updated = upd1
         upErr = error
       }
       if (upErr) {
         // Retry with camelCase identifier
-        const { data, error } = await supabaseAdmin
+        const { data: upd2, error } = await supabaseAdmin
           .from("hymns")
           .update({
-            title: data.title,
-            lyrics: data.lyrics,
+            title: payload.title,
+            lyrics: payload.lyrics,
             category:
-              typeof data.category === "string" && data.category.trim() !== ""
-                ? data.category
+              typeof payload.category === "string" && payload.category.trim() !== ""
+                ? payload.category
                 : undefined,
-            author: data.author,
+            author: payload.author,
           })
           .eq("hymnNumber", hymnNumber)
           .select("*")
           .single()
-        updated = data
+        updated = upd2
         upErr = error
       }
       if (!upErr && updated) {
