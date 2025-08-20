@@ -90,7 +90,7 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
         ) : (
           <ul className="space-y-2 sm:space-y-3">
             {hymns.map((hymn) => (
-              <li key={getHymnKey(hymn)} className="border rounded-lg overflow-hidden">
+              <li key={getHymnKey(hymn)} className="border rounded-lg scroll-mt-16">
                 <div className={`flex items-center ${selectedHymn === hymn.hymnNumber ? 'sticky top-0 z-10 bg-background border-b' : ''}`}>
                   <Button
                     variant="ghost"
@@ -129,7 +129,7 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                   </Button>
                 </div>
                 {selectedHymn === hymn.hymnNumber && (
-                  <div className="p-3 sm:p-4 pt-0 bg-muted/50">
+                  <div className="p-3 sm:p-4 pt-0 bg-muted/50 rounded-b-lg overflow-hidden">
                     {isAdmin && editing !== hymn.hymnNumber && (
                       <div className="mb-3 flex justify-end">
                         <Button size="sm" variant="outline" onClick={() => startEdit(hymn)}>
