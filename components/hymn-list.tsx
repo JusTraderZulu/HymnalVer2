@@ -1,8 +1,13 @@
 "use client"
+import { useState } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { ChevronDown, ChevronUp, Music, Heart } from "lucide-react"
 import type { Hymn } from "@/types/hymn"
+import { useToast } from "@/hooks/use-toast"
 
 interface HymnListProps {
   hymns: Hymn[]
@@ -15,6 +20,53 @@ interface HymnListProps {
 }
 
 export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites, onToggleFavorite, isAdmin = false, onEdit }: HymnListProps) {
+  const { toast } = useToast()
+  const [editing, setEditing] = useState<number | string | null>(null)
+  const [editedTitle, setEditedTitle] = useState("")
+  const [editedLyrics, setEditedLyrics] = useState("")
+  const [editedCategory, setEditedCategory] = useState("")
+  const [editedAuthor, setEditedAuthor] = useState<{ name: string }>({ name: "" })
+  const [isSaving, setIsSaving] = useState(false)
+
+  const startEdit = (hymn: Hymn) => {
+    setEditing(hymn.hymnNumber)
+    setEditedTitle(hymn.title || "")
+    setEditedLyrics(hymn.lyrics || "")
+    setEditedCategory(hymn.category || "")
+    setEditedAuthor({ name: hymn.author?.name || "" })
+  }
+
+  const cancelEdit = () => {
+    setEditing(null)
+  }
+
+  const saveEdit = async (hymnNumber: number | string) => {
+    try {
+      if (!editedTitle.trim() || !editedLyrics.trim()) {
+        toast({ title: "Missing fields", description: "Title and lyrics are required", variant: "destructive" })
+        return
+      }
+      setIsSaving(true)
+      const res = await fetch(`/api/hymns/${hymnNumber}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editedTitle,
+          lyrics: editedLyrics,
+          category: editedCategory,
+          author: editedAuthor,
+        }),
+      })
+      if (!res.ok) throw new Error(`Save failed: ${res.status}`)
+      toast({ title: "Saved", description: "Hymn updated" })
+      try { window.dispatchEvent(new CustomEvent('hymns-updated')) } catch {}
+      setEditing(null)
+    } catch (e) {
+      toast({ title: "Error", description: "Failed to save", variant: "destructive" })
+    } finally {
+      setIsSaving(false)
+    }
+  }
   // Generate a unique key for each hymn
   const getHymnKey = (hymn: Hymn): string => {
     // Use filename if available as it's guaranteed to be unique
@@ -74,23 +126,50 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                 </div>
                 {selectedHymn === hymn.hymnNumber && (
                   <div className="p-3 sm:p-4 pt-0 bg-muted/50">
-                    <div className="whitespace-pre-line text-xs sm:text-sm">{hymn.lyrics}</div>
-                    {hymn.author && (
-                      <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
-                        <p>
-                          Author: {hymn.author.name}{" "}
-                          {hymn.author.birthYear &&
-                            hymn.author.deathYear &&
-                            `(${hymn.author.birthYear}-${hymn.author.deathYear})`}
-                        </p>
+                    {isAdmin && editing === hymn.hymnNumber ? (
+                      <div className="space-y-2">
+                        <div>
+                          <Label>Title</Label>
+                          <Input value={editedTitle} onChange={(e) => setEditedTitle(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label>Category</Label>
+                          <Input value={editedCategory} onChange={(e) => setEditedCategory(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label>Lyrics</Label>
+                          <Textarea className="min-h-[150px] text-sm" value={editedLyrics} onChange={(e) => setEditedLyrics(e.target.value)} />
+                        </div>
+                        <div>
+                          <Label>Author</Label>
+                          <Input value={editedAuthor.name} onChange={(e) => setEditedAuthor({ name: e.target.value })} placeholder="Author name" />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={cancelEdit}>Cancel</Button>
+                          <Button size="sm" onClick={() => saveEdit(hymn.hymnNumber)} disabled={isSaving}>Save</Button>
+                        </div>
                       </div>
-                    )}
-                    {isAdmin && (
-                      <div className="mt-3 flex justify-end">
-                        <Button size="sm" variant="outline" onClick={() => onEdit && onEdit(hymn.hymnNumber)}>
-                          Edit
-                        </Button>
-                      </div>
+                    ) : (
+                      <>
+                        <div className="whitespace-pre-line text-xs sm:text-sm">{hymn.lyrics}</div>
+                        {hymn.author && (
+                          <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
+                            <p>
+                              Author: {hymn.author.name}{" "}
+                              {hymn.author.birthYear &&
+                                hymn.author.deathYear &&
+                                `(${hymn.author.birthYear}-${hymn.author.deathYear})`}
+                            </p>
+                          </div>
+                        )}
+                        {isAdmin && (
+                          <div className="mt-3 flex justify-end">
+                            <Button size="sm" variant="outline" onClick={() => startEdit(hymn)}>
+                              Edit
+                            </Button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
