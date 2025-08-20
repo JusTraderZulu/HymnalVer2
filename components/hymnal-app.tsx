@@ -593,12 +593,15 @@ export default function HymnalApp() {
               onHymnSelect={handleHymnSelect}
               favorites={favorites}
               onToggleFavorite={toggleFavorite}
+              isAdmin={!readOnly && isAdmin}
+              onEdit={(hn) => setSelectedHymn(hn)}
             />
           </>
         )}
       </main>
 
-      {selectedHymn && !loading && (
+      {/* Admin edit sheet when selected and admin */}
+      {selectedHymn && !loading && !readOnly && isAdmin && (
         <HymnDetail
           hymn={hymns.find((h) => h.hymnNumber === selectedHymn)!}
           onClose={() => setSelectedHymn(null)}

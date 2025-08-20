@@ -10,9 +10,11 @@ interface HymnListProps {
   onHymnSelect: (hymnNumber: number | string) => void
   favorites: (number | string)[]
   onToggleFavorite: (hymnNumber: number | string) => void
+  isAdmin?: boolean
+  onEdit?: (hymnNumber: number | string) => void
 }
 
-export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites, onToggleFavorite }: HymnListProps) {
+export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites, onToggleFavorite, isAdmin = false, onEdit }: HymnListProps) {
   // Generate a unique key for each hymn
   const getHymnKey = (hymn: Hymn): string => {
     // Use filename if available as it's guaranteed to be unique
@@ -81,6 +83,13 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                             hymn.author.deathYear &&
                             `(${hymn.author.birthYear}-${hymn.author.deathYear})`}
                         </p>
+                      </div>
+                    )}
+                    {isAdmin && (
+                      <div className="mt-3 flex justify-end">
+                        <Button size="sm" variant="outline" onClick={() => onEdit && onEdit(hymn.hymnNumber)}>
+                          Edit
+                        </Button>
                       </div>
                     )}
                   </div>
