@@ -554,6 +554,32 @@ export default function HymnalApp() {
               </TabsTrigger>
             </TabsList>
           </Tabs>
+
+          {/* Centered action bar under tabs */}
+          <div className="mt-2 sm:mt-3 flex w-full justify-center gap-2">
+            <Button size="sm" onClick={handleRefresh} className="flex items-center gap-1" variant="outline">
+              <RefreshCcw className="h-4 w-4" />
+              <span>Refresh</span>
+            </Button>
+            {!readOnly && (
+              <>
+                <Button size="sm" onClick={() => setAdminOpen(true)} className="flex items-center gap-1" variant="outline">
+                  <span>{isAdmin ? "Admin" : "Admin Login"}</span>
+                </Button>
+                {activeTab === "all" ? (
+                  <Button size="sm" onClick={handleAddNewHymn} className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" />
+                    <span>Add Hymn</span>
+                  </Button>
+                ) : activeTab === "choruses" ? (
+                  <Button size="sm" onClick={handleAddNewChorus} className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" />
+                    <span>Add Chorus</span>
+                  </Button>
+                ) : null}
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -567,30 +593,6 @@ export default function HymnalApp() {
           </div>
         ) : (
           <>
-            <div className="flex justify-end px-2 sm:px-4 pt-2 sm:pt-4 gap-2">
-              <Button size="sm" onClick={handleRefresh} className="flex items-center gap-1" variant="outline">
-                <RefreshCcw className="h-4 w-4" />
-                <span>Refresh</span>
-              </Button>
-              {!readOnly && (
-                <>
-                  <Button size="sm" onClick={() => setAdminOpen(true)} className="flex items-center gap-1" variant="outline">
-                    <span>{isAdmin ? "Admin" : "Admin Login"}</span>
-                  </Button>
-                  {activeTab === "all" ? (
-                    <Button size="sm" onClick={handleAddNewHymn} className="flex items-center gap-1">
-                      <Plus className="h-4 w-4" />
-                      <span>Add Hymn</span>
-                    </Button>
-                  ) : activeTab === "choruses" ? (
-                    <Button size="sm" onClick={handleAddNewChorus} className="flex items-center gap-1">
-                      <Plus className="h-4 w-4" />
-                      <span>Add Chorus</span>
-                    </Button>
-                  ) : null}
-                </>
-              )}
-            </div>
             <HymnList
               hymns={getDisplayHymns()}
               selectedHymn={selectedHymn}
