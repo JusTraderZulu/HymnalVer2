@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Search, Plus, WifiOff, Moon, Sun, X, RefreshCcw } from "lucide-react"
 import HymnList from "@/components/hymn-list"
@@ -49,6 +49,7 @@ export default function HymnalApp() {
   const [newHymnType, setNewHymnType] = useState<'hymn' | 'chorus'>('hymn')
   const { toast } = useToast()
   const { theme, setTheme, resolvedTheme } = useTheme()
+  const mainRef = useRef<HTMLDivElement | null>(null)
 
   // Admin UI state
   const [isAdmin, setIsAdmin] = useState(false)
@@ -378,6 +379,7 @@ export default function HymnalApp() {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
     setSelectedHymn(null)
+    try { mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
   }
 
   const handleHymnSelect = (hymnNumber: number | string) => {
@@ -554,7 +556,7 @@ export default function HymnalApp() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
+      <main ref={mainRef} className="flex-1 overflow-auto">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-2">
