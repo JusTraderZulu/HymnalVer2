@@ -17,9 +17,10 @@ interface HymnListProps {
   onToggleFavorite: (hymnNumber: number | string) => void
   isAdmin?: boolean
   onEdit?: (hymnNumber: number | string) => void
+  listRef?: React.Ref<HTMLDivElement>
 }
 
-export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites, onToggleFavorite, isAdmin = false, onEdit }: HymnListProps) {
+export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites, onToggleFavorite, isAdmin = false, onEdit, listRef }: HymnListProps) {
   const { toast } = useToast()
   const [editing, setEditing] = useState<number | string | null>(null)
   const [editedTitle, setEditedTitle] = useState("")
@@ -111,7 +112,7 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
   };
 
   return (
-    <ScrollArea className="h-full">
+    <ScrollArea ref={listRef as any} className="h-full">
       <div className="max-w-3xl mx-auto p-2 sm:p-4">
         {hymns.length === 0 ? (
           <div className="text-center py-6 sm:py-8">

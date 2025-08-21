@@ -50,6 +50,7 @@ export default function HymnalApp() {
   const { toast } = useToast()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const mainRef = useRef<HTMLDivElement | null>(null)
+  const listRef = useRef<HTMLDivElement | null>(null)
 
   // Admin UI state
   const [isAdmin, setIsAdmin] = useState(false)
@@ -379,7 +380,7 @@ export default function HymnalApp() {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
     setSelectedHymn(null)
-    try { mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
+    try { listRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) } catch {}
   }
 
   const handleHymnSelect = (hymnNumber: number | string) => {
@@ -598,6 +599,7 @@ export default function HymnalApp() {
               onToggleFavorite={toggleFavorite}
               isAdmin={!readOnly && isAdmin}
               onEdit={(hn) => setEditHymn(hn)}
+              listRef={listRef}
             />
           </>
         )}
