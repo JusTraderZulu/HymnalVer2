@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +23,7 @@ interface HymnListProps {
 
 export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites, onToggleFavorite, isAdmin = false, onEdit, listRef, stickyOffset = 0 }: HymnListProps) {
   const { toast } = useToast()
+  const favoriteSet = useMemo(() => new Set(favorites), [favorites])
   const [editing, setEditing] = useState<number | string | null>(null)
   const [editedTitle, setEditedTitle] = useState("")
   const [editedLyrics, setEditedLyrics] = useState("")
@@ -156,7 +157,7 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                     aria-label={favorites.includes(hymn.hymnNumber) ? "Remove from favorites" : "Add to favorites"}
                   >
                     <Heart
-                      className={`h-4 w-4 sm:h-5 sm:w-5 ${favorites.some(f => f === hymn.hymnNumber) ? "fill-primary text-primary" : "text-muted-foreground"}`}
+                      className={`h-4 w-4 sm:h-5 sm:w-5 ${favoriteSet.has(hymn.hymnNumber) ? "fill-primary text-primary" : "text-muted-foreground"}`}
                     />
                   </Button>
                 </div>

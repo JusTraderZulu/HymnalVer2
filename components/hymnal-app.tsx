@@ -24,7 +24,6 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog"
 import PWAInstallPrompt from "@/components/pwa-install-prompt"
-import Fuse from "fuse.js"
 import { db } from "@/lib/db"
 import { useTheme } from "next-themes"
 
@@ -53,6 +52,18 @@ export default function HymnalApp() {
   const listRef = useRef<HTMLDivElement | null>(null)
   const headerRef = useRef<HTMLElement | null>(null)
   const [headerHeight, setHeaderHeight] = useState(0)
+  const [fuse, setFuse] = useState<any>(null)
+
+  // Debounced search input to reduce per-keystroke work
+  const useDebouncedValue = <T,>(value: T, delayMs: number) => {
+    const [debounced, setDebounced] = useState(value)
+    useEffect(() => {
+      const id = setTimeout(() => setDebounced(value), delayMs)
+      return () => clearTimeout(id)
+    }, [value, delayMs])
+    return debounced
+  }
+  const debouncedQuery = useDebouncedValue(searchQuery, 180)
 
   // Admin UI state
   const [isAdmin, setIsAdmin] = useState(false)
@@ -254,10 +265,16 @@ export default function HymnalApp() {
         }
       }
 
-      setHymns(merged)
+      // Precompute lowercase fields for faster simple checks/render
+      const augmented = merged.map((h) => ({
+        ...h,
+        lowercaseTitle: (h.title || "").toLowerCase(),
+        lowercaseLyrics: (h.lyrics || "").toLowerCase(),
+      }))
+      setHymns(augmented)
       
       // Save to cache for offline use
-      saveToCache(merged);
+      saveToCache(augmented);
 
       // Show directory info if we're using fallback data
       // This is a simple heuristic - if we have exactly the number of hymns in our fallback data
@@ -349,66 +366,101 @@ export default function HymnalApp() {
     }
   }, [])
 
-  // after hymns state defined
-  const fuse = useMemo(() =>
-    new Fuse(hymns, {
-      keys: [
-        {
-          name: "hymnNumber",
-          getFn: (item: Hymn) => normalize(String(item.hymnNumber || "")),
-          weight: 0.5,
-        },
-        {
-          name: "title",
-          getFn: (item: Hymn) => normalize(item.title || ""),
-          weight: 0.4,
-        },
-        {
-          name: "lyrics",
-          getFn: (item: Hymn) => normalize(item.lyrics || ""),
-          weight: 0.3,
-        },
-        {
-          name: "firstLine",
-          getFn: (item: Hymn) => normalize(item.firstLine || ""),
-          weight: 0.15,
-        },
-        {
-          name: "author.name",
-          getFn: (item: Hymn) => normalize(item.author?.name || ""),
-          weight: 0.1,
-        },
-        {
-          name: "category",
-          getFn: (item: Hymn) => normalize(item.category || ""),
-          weight: 0.05,
-        },
-      ],
-      threshold: 0.4,
-      ignoreLocation: true,
-      includeScore: false,
-    }), [hymns])
+  // Build Fuse index lazily when hymns change to reduce main-thread work on mount
+  useEffect(() => {
+    let cancelled = false
+    const build = async () => {
+      try {
+        const { default: FuseLib } = await import("fuse.js")
+        const instance = new FuseLib(hymns, {
+          keys: [
+            {
+              name: "hymnNumber",
+              getFn: (item: Hymn) => normalize(String(item.hymnNumber || "")),
+              weight: 0.5,
+            },
+            {
+              name: "title",
+              getFn: (item: Hymn) => normalize(item.title || ""),
+              weight: 0.4,
+            },
+            {
+              name: "lyrics",
+              getFn: (item: Hymn) => normalize(item.lyrics || ""),
+              weight: 0.3,
+            },
+            {
+              name: "firstLine",
+              getFn: (item: Hymn) => normalize(item.firstLine || ""),
+              weight: 0.15,
+            },
+            {
+              name: "author.name",
+              getFn: (item: Hymn) => normalize(item.author?.name || ""),
+              weight: 0.1,
+            },
+            {
+              name: "category",
+              getFn: (item: Hymn) => normalize(item.category || ""),
+              weight: 0.05,
+            },
+          ],
+          threshold: 0.4,
+          ignoreLocation: true,
+          includeScore: false,
+        })
+        if (!cancelled) setFuse(instance)
+      } catch {}
+    }
+    const schedule = () => {
+      try {
+        // @ts-ignore
+        if (typeof requestIdleCallback !== 'undefined') {
+          // @ts-ignore
+          requestIdleCallback(() => build())
+          return
+        }
+      } catch {}
+      setTimeout(build, 0)
+    }
+    if (hymns && hymns.length > 0) schedule()
+    return () => { cancelled = true }
+  }, [hymns])
 
-  const filteredHymns = searchQuery
-    ? fuse.search(normalize(searchQuery)).map((res: Fuse.FuseResult<Hymn>) => res.item)
-    : hymns;
+  const filteredHymns = useMemo(() => {
+    if (!debouncedQuery) return hymns
+    const q = normalize(debouncedQuery)
+    try {
+      if (fuse) {
+        return fuse.search(q).map((res: any) => res.item as Hymn)
+      }
+    } catch {}
+    // Fallback lightweight filter until Fuse is ready
+    return hymns.filter((h) => {
+      const n = String(h.hymnNumber || "").toLowerCase()
+      const t = (h as any).lowercaseTitle || (h.title || "").toLowerCase()
+      const lyr = (h as any).lowercaseLyrics || (h.lyrics || "").toLowerCase()
+      return n.includes(q) || t.includes(q) || lyr.includes(q)
+    })
+  }, [debouncedQuery, hymns, fuse])
 
   // Filter for choruses (hymns with ID starting with 's')
-  const chorusHymns = hymns.filter((hymn: Hymn) => 
+  const chorusHymns = useMemo(() => hymns.filter((hymn: Hymn) => 
     typeof hymn.hymnNumber === 'string' && hymn.hymnNumber.toString().toLowerCase().startsWith('s')
-  )
+  ), [hymns])
 
   // Filter for regular hymns (not starting with 's')
-  const regularHymns = hymns.filter((hymn: Hymn) => 
+  const regularHymns = useMemo(() => hymns.filter((hymn: Hymn) => 
     !(typeof hymn.hymnNumber === 'string' && hymn.hymnNumber.toString().toLowerCase().startsWith('s'))
-  )
+  ), [hymns])
 
-  const favoriteHymns = hymns.filter((hymn) => favorites.some(f => f === hymn.hymnNumber))
-  const recentHymns = hymns
+  const favoriteHymns = useMemo(() => hymns.filter((hymn) => favorites.some(f => f === hymn.hymnNumber)), [hymns, favorites])
+  const recentHymns = useMemo(() => hymns
     .filter((hymn) => recentlyViewed.some(r => r === hymn.hymnNumber))
     .sort((a, b) => {
       return recentlyViewed.indexOf(a.hymnNumber) - recentlyViewed.indexOf(b.hymnNumber)
     })
+  , [hymns, recentlyViewed])
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
