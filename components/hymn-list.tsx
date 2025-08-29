@@ -18,9 +18,10 @@ interface HymnListProps {
   isAdmin?: boolean
   onEdit?: (hymnNumber: number | string) => void
   listRef?: React.Ref<HTMLDivElement>
+  stickyOffset?: number
 }
 
-export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites, onToggleFavorite, isAdmin = false, onEdit, listRef }: HymnListProps) {
+export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites, onToggleFavorite, isAdmin = false, onEdit, listRef, stickyOffset = 0 }: HymnListProps) {
   const { toast } = useToast()
   const [editing, setEditing] = useState<number | string | null>(null)
   const [editedTitle, setEditedTitle] = useState("")
@@ -124,7 +125,10 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
           <ul className="space-y-2 sm:space-y-3">
             {hymns.map((hymn) => (
               <li key={getHymnKey(hymn)} className="border rounded-lg scroll-mt-16">
-                <div className={`flex items-center ${selectedHymn === hymn.hymnNumber ? 'sticky top-0 z-10 bg-background border-b' : ''}`}>
+                <div
+                  className={`flex items-center ${selectedHymn === hymn.hymnNumber ? 'sticky z-10 bg-background border-b' : ''}`}
+                  style={selectedHymn === hymn.hymnNumber ? { top: stickyOffset } as React.CSSProperties : undefined}
+                >
                   <Button
                     variant="ghost"
                     className="flex-1 flex items-center justify-between p-2 sm:p-4 h-auto"

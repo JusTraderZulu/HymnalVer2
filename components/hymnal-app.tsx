@@ -51,6 +51,8 @@ export default function HymnalApp() {
   const { theme, setTheme, resolvedTheme } = useTheme()
   const mainRef = useRef<HTMLDivElement | null>(null)
   const listRef = useRef<HTMLDivElement | null>(null)
+  const headerRef = useRef<HTMLElement | null>(null)
+  const [headerHeight, setHeaderHeight] = useState(0)
 
   // Admin UI state
   const [isAdmin, setIsAdmin] = useState(false)
@@ -316,6 +318,26 @@ export default function HymnalApp() {
     check()
   }, [])
 
+  // Measure header height to offset sticky list headers so search bar stays visible
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const update = () => {
+      try { setHeaderHeight(Math.ceil(el.getBoundingClientRect().height)) } catch {}
+    }
+    update()
+    let ro: ResizeObserver | null = null
+    try {
+      ro = new ResizeObserver(update)
+      ro.observe(el)
+    } catch {}
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('resize', update)
+      try { ro && ro.disconnect() } catch {}
+    }
+  }, [])
+
   // after hymns state defined
   const fuse = useMemo(() =>
     new Fuse(hymns, {
@@ -473,7 +495,7 @@ export default function HymnalApp() {
 
   return (
     <div className="flex flex-col h-screen w-screen max-w-full overflow-hidden">
-      <header className="sticky top-0 z-10 bg-background border-b p-2 sm:p-4">
+      <header ref={headerRef as any} className="sticky top-0 z-20 bg-background border-b p-2 sm:p-4">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-xl sm:text-2xl font-bold text-center mb-2 sm:mb-4">Spiritual Baptist Hymnal</h1>
 
@@ -602,6 +624,7 @@ export default function HymnalApp() {
               isAdmin={!readOnly && isAdmin}
               onEdit={(hn) => setEditHymn(hn)}
               listRef={listRef}
+              stickyOffset={headerHeight}
             />
           </>
         )}
