@@ -136,11 +136,16 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                       onHymnSelect(hymn.hymnNumber)
                       const li = (e.currentTarget as HTMLElement).closest('li') as HTMLElement | null
                       const viewport = (listRef as any)?.current as HTMLDivElement | null
+                      // After expansion renders, scroll so content below the sticky header is fully visible
                       if (li && viewport) {
                         try {
-                          const liTop = li.offsetTop
-                          const targetTop = Math.max(0, liTop - Math.max(0, stickyOffset) - 8)
-                          viewport.scrollTo({ top: targetTop, behavior: 'smooth' })
+                          const rowEl = e.currentTarget as HTMLElement
+                          const rowH = rowEl?.offsetHeight || 0
+                          requestAnimationFrame(() => {
+                            const liTop = li.offsetTop
+                            const targetTop = Math.max(0, liTop - Math.max(0, stickyOffset) - rowH - 8)
+                            viewport.scrollTo({ top: targetTop, behavior: 'smooth' })
+                          })
                         } catch {}
                       }
                     }}
