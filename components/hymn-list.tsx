@@ -134,8 +134,15 @@ export default function HymnList({ hymns, selectedHymn, onHymnSelect, favorites,
                     className="flex-1 flex items-center justify-between p-2 sm:p-4 h-auto"
                     onClick={(e) => {
                       onHymnSelect(hymn.hymnNumber)
-                      const li = (e.currentTarget as HTMLElement).closest('li')
-                      try { li && li.scrollIntoView({ block: 'start', behavior: 'smooth' }) } catch {}
+                      const li = (e.currentTarget as HTMLElement).closest('li') as HTMLElement | null
+                      const viewport = (listRef as any)?.current as HTMLDivElement | null
+                      if (li && viewport) {
+                        try {
+                          const liTop = li.offsetTop
+                          const targetTop = Math.max(0, liTop - Math.max(0, stickyOffset) - 8)
+                          viewport.scrollTo({ top: targetTop, behavior: 'smooth' })
+                        } catch {}
+                      }
                     }}
                   >
                     <div className="flex items-center gap-2 sm:gap-3">
