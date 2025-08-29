@@ -74,9 +74,9 @@ export default function HymnalApp() {
   useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false);
-      // attempt to sync and refresh data on reconnect
+      // attempt to sync and refresh data on reconnect (background)
       syncLocalEdits();
-      fetchHymns();
+      fetchHymns({ background: true });
     };
     const handleOffline = () => setIsOffline(true);
 
@@ -98,7 +98,8 @@ export default function HymnalApp() {
   useEffect(() => {
     const handleFocus = () => {
       if (navigator.onLine) {
-        fetchHymns();
+        // Background refresh on focus to avoid UI reset
+        fetchHymns({ background: true });
       }
     };
     window.addEventListener('focus', handleFocus);
@@ -200,9 +201,9 @@ export default function HymnalApp() {
   };
 
   // Fetch hymns from the API
-  const fetchHymns = async () => {
+  const fetchHymns = async ({ background = false }: { background?: boolean } = {}) => {
     try {
-      setLoading(true);
+      if (!background) setLoading(true);
       
       // First check cache
       const cachedHymns = loadFromCache();
@@ -211,18 +212,22 @@ export default function HymnalApp() {
       if (isOffline) {
         if (cachedHymns) {
           setHymns(cachedHymns);
-          toast({
-            title: "Offline Mode",
-            description: "Using cached hymn data. Some features may be limited.",
-          });
+          if (!background) {
+            toast({
+              title: "Offline Mode",
+              description: "Using cached hymn data. Some features may be limited.",
+            });
+          }
         } else {
-          toast({
-            title: "Offline Mode",
-            description: "No cached data available. Connect to the internet to load hymns.",
-            variant: "destructive",
-          });
+          if (!background) {
+            toast({
+              title: "Offline Mode",
+              description: "No cached data available. Connect to the internet to load hymns.",
+              variant: "destructive",
+            });
+          }
         }
-        setLoading(false);
+        if (!background) setLoading(false);
         return;
       }
       
@@ -256,9 +261,11 @@ export default function HymnalApp() {
 
       // Show directory info if we're using fallback data
       // This is a simple heuristic - if we have exactly the number of hymns in our fallback data
-      if (data.length === 11) {
-        // 10 hymns + your example hymn
-        setShowDirectoryInfo(true)
+      if (!background) {
+        if (data.length === 11) {
+          // 10 hymns + your example hymn
+          setShowDirectoryInfo(true)
+        }
       }
     } catch (error) {
       console.error("Error fetching hymns:", error)
@@ -267,19 +274,23 @@ export default function HymnalApp() {
       const cachedHymns = loadFromCache();
       if (cachedHymns) {
         setHymns(cachedHymns);
-        toast({
-          title: "Connection Error",
-          description: "Using cached hymn data. Connect to the internet for the latest updates.",
-        });
+        if (!background) {
+          toast({
+            title: "Connection Error",
+            description: "Using cached hymn data. Connect to the internet for the latest updates.",
+          });
+        }
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to load hymns and no cache available.",
-          variant: "destructive",
-        });
+        if (!background) {
+          toast({
+            title: "Error",
+            description: "Failed to load hymns and no cache available.",
+            variant: "destructive",
+          });
+        }
       }
     } finally {
-      setLoading(false)
+      if (!background) setLoading(false)
     }
   }
 
